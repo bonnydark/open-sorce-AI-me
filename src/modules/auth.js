@@ -1,6 +1,7 @@
 const SESSION_COOKIE = "osm_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
-const PBKDF2_ITERATIONS = 310000;
+// Cloudflare Workers Web Crypto supports up to 100,000 PBKDF2 iterations.
+const PBKDF2_ITERATIONS = 100000;
 
 const json = (data, status = 200, headers = {}) => Response.json(data, { status, headers });
 const randomHex = (length = 32) => {
