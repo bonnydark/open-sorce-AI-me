@@ -1,6 +1,7 @@
 import { handleAuth, getSessionUser } from "./modules/auth.js";
 import { generateReply } from "./modules/ai-engine.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
+import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -36,7 +37,9 @@ export default {
         else {
           const user = await getSessionUser(request, env);
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
-          else if (url.pathname === "/api/chats" || /^\/api\/chats\/[a-f0-9-]+$/i.test(url.pathname)) {
+          else if (url.pathname === "/api/settings") {
+            response = await handleUserSettings(request, env, user);
+          } else if (url.pathname === "/api/chats" || /^\/api\/chats\/[a-f0-9-]+$/i.test(url.pathname)) {
             response = await handleChats(request, env, url, user);
           } else if (url.pathname === "/api/chat" && request.method === "POST") {
             let body;
@@ -58,7 +61,8 @@ export default {
                   await appendMessage(env.DB, user.id, conversationId, "user", message);
                   try {
                     const context = await recentContext(env.DB, user.id, conversationId, 12);
-                    const reply = await generateReply(env.AI, context);
+                    const settings = await getUserSettings(env.DB, user.id);
+                    const reply = await generateReply(env.AI, context, settings);
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
                     response = json({ reply, conversationId, title: chat.title });
                   } catch (error) {
