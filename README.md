@@ -7,7 +7,7 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - Passwords are salted and hashed with PBKDF2 on the Worker.
 - HttpOnly, Secure, SameSite session cookie with server-side session records.
 - Per-account chat history stored in Cloudflare D1.
-- Conversation links use `/{username}/c-{conversation-id}-{title-slug}`; the ID is URL-safe and the backend still checks account ownership.
+- Conversation links use `/{username}/c-{opaque-conversation-id}` without putting chat titles in the URL; the backend still checks account ownership.
 - Personalized welcome screen and shareable/deep-linkable conversation paths.
 - Per-account preferences: theme, response style, typewriter effect/speed, and code panels.
 - Dedicated backend model adapter at `src/modules/ai-engine.js`; browser adapter at `modul/ai-engine.js`.
@@ -47,5 +47,5 @@ All chat-history, settings, and AI endpoints require a signed-in session. Conver
 ## Important notes
 - Email verification and password reset are not implemented yet.
 - Configure rate limiting at the edge before opening registration to the public.
-- Conversation title slugs in URLs are readable URL slugs, not encryption. The conversation ID is not a secret; authorization is enforced by the authenticated backend.
+- Chat titles stay in the account history rather than the URL. Conversation IDs are opaque identifiers, not encryption or authorization tokens; access is enforced by the authenticated backend.
 - The application code is open source, but inference currently depends on Cloudflare Workers AI; the repository does not itself contain model weights or a separately trained model.
