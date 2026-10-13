@@ -1,7 +1,7 @@
 function isBlockedHost(hostname) {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return true;
-  if (host === "0.0.0.0" || host === "::" || host === "::1" || host === "127.0.0.1") return true;
+  if (host === "0.0.0.0" || host === "::" || host === "::1" || host === "127.0.0.1" || host.includes(":")) return true;
   const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (m) {
     const a=+m[1],b=+m[2],c=+m[3],d=+m[4];
@@ -10,7 +10,8 @@ function isBlockedHost(hostname) {
   }
   return false;
 }
-export async function fetchPublicText(input) {
+export async function fetchPublicText(input, redirectCount = 0) {
+  if (redirectCount > 2) throw new Error("Too many redirects; open the final public URL directly.");
   let url;
   try { url = new URL(input); } catch { throw new Error("Give a valid full URL, e.g. https://example.com or a raw GitHub URL."); }
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Only HTTP and HTTPS URLs are allowed.");
@@ -22,7 +23,7 @@ export async function fetchPublicText(input) {
     if (!location) throw new Error("Website redirected without a location.");
     const next = new URL(location, url);
     if (next.hostname !== url.hostname) throw new Error("Cross-host redirects are blocked. Open the final URL directly.");
-    return fetchPublicText(next.toString());
+    return fetchPublicText(next.toString(), redirectCount + 1);
   }
   if (!response.ok) throw new Error("Website returned HTTP " + response.status + ".");
   const type = response.headers.get("content-type") || "unknown";
