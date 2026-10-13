@@ -23,7 +23,7 @@ export async function respond(prompt, conversationId = currentConversationId) {
   const message = String(prompt ?? "").trim();
   if (!message) throw new Error("Enter a message first.");
   if (message.length > 20000) throw new Error("Message is too long (20,000 characters max).");
-  const response = await fetch("/api/chat", {
+  const response = await fetch(new URL("/api/chat", globalThis.location.origin), {
     method: "POST",
     headers: { "content-type": "application/json", "accept": "application/json" },
     credentials: "same-origin",
@@ -32,8 +32,8 @@ export async function respond(prompt, conversationId = currentConversationId) {
   let data;
   try { data = await response.json(); }
   catch { throw new Error("The AI backend returned invalid JSON."); }
-  if (!response.ok) throw new Error(data?.error || ("AI backend HTTP " + response.status));
   if (data.conversationId) currentConversationId = data.conversationId;
+  if (!response.ok) throw new Error(data?.error || ("AI backend HTTP " + response.status));
   const answer = data?.reply ?? data?.response ?? data?.answer ?? data?.output_text;
   if (typeof answer !== "string" || !answer.trim()) throw new Error("AI backend returned an empty response.");
   return answer;
