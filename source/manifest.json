@@ -1,6 +1,6 @@
 {
-  "name": "Open Source AI",
-  "version": "0.2.0",
-  "entry": "modul/assistant.js",
-  "description": "Provider-agnostic AI backend adapter for Cloudflare Worker"
+  "name": "Open Source AI Engine",
+  "version": "0.3.0",
+  "entry": "modul/ai-engine.js",
+  "description": "Dedicated modular AI engine with conversation memory and a provider-safe Worker backend"
 }
