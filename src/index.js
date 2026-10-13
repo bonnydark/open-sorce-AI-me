@@ -2,6 +2,7 @@ import { handleAuth, getSessionUser } from "./modules/auth.js";
 import { generateReply } from "./modules/ai-engine.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
+import { handleMemories } from "./modules/memories.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
