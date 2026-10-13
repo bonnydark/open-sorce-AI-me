@@ -6,6 +6,7 @@ import { handleMemories } from "./modules/memories.js";
 import { handleShareOwner, getSharedChat } from "./modules/shares.js";
 import { handleFiles } from "./modules/files.js";
 import { fetchPublicText } from "./modules/web-fetch.js";
+import { handleOsint } from "./modules/osint.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -43,7 +44,9 @@ export default {
         else {
           const user = await getSessionUser(request, env);
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
-          else if (url.pathname === "/api/settings") {
+          else if (url.pathname === "/api/osint") {
+            response = await handleOsint(request);
+          } else if (url.pathname === "/api/settings") {
             response = await handleUserSettings(request, env, user);
           } else if (/^\/api\/chats\/[a-f0-9-]+\/share$/i.test(url.pathname)) {
             response = await handleShareOwner(request, env, user, url);
