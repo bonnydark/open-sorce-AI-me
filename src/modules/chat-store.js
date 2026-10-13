@@ -55,4 +55,4 @@ export async function handleChats(request, env, url, user) {
   }
   return json({ error: "Not found." }, 404);
 }
-export { createChat, appendMessage, recentContext, ownsConversation };
+export { ownsConversation };
