@@ -72,7 +72,7 @@
  $('logout').addEventListener('click',async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'})}catch{}currentUser=null;activeChatId=null;input.disabled=true;send.disabled=true;$('authGate').classList.remove('hidden');$('buildStatus').textContent='SIGNED OUT';showEmpty('Sign in or create an account to begin.');setAuthMode('login')});
  form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;const prompt=input.value.trim();if(!prompt)return;busy=true;addMessage('YOU',prompt,'user');input.value='';send.disabled=true;
   try{if(!activeModule)throw new Error('AI module is still loading. Try again in a moment.');const answer=await activeModule.respond(prompt,activeChatId);activeChatId=activeModule.currentConversationId||activeChatId;addTypingAnswer('AI MODULE',answer);await loadChatButtonsOnly()}
-  catch(error){addMessage('SYSTEM',error.message);if(/sign in|session/i.test(error.message)){$('authGate').classList.remove('hidden')}}
+  catch(error){activeChatId=activeModule?.currentConversationId||activeChatId;addMessage('SYSTEM',error.message);await loadChatButtonsOnly();if(/sign in|session/i.test(error.message)){$('authGate').classList.remove('hidden')}}
   finally{busy=false;send.disabled=false;input.focus()}
  });
  loadModule();checkSession();
