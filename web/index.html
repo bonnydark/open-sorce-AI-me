@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090909"><meta name="description" content="Open Source AI Me — a modular AI workspace with private account-based chat history.">
+<meta name="theme-color" content="#090909"><link rel="manifest" href="/manifest.json"><link rel="icon" href="/icon.svg" type="image/svg+xml"><meta name="description" content="Open Source AI Me — a modular AI workspace with private account-based chat history.">
 <title>Open Source AI Me</title>
 <style>
 :root{color-scheme:dark;--bg:#080808;--panel:#111;--line:#342020;--text:#f7f4f4;--muted:#a99a9a;--accent:#ff2638;--accent2:#ff5b35;--glow:#ff263844}
@@ -159,6 +159,7 @@ body[data-theme="light"] .msg,body[data-theme="light"] .composer,body[data-theme
  $('voiceToggle').addEventListener('click',()=>setVoiceMode(!voiceMode));
  function resizePrompt(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,Math.floor(window.innerHeight*.33))+'px';input.style.overflowY=input.scrollHeight>Math.floor(window.innerHeight*.33)?'auto':'hidden'}
  input.addEventListener('input',resizePrompt);input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();form.requestSubmit()}});
+  if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('/sw.js').catch(()=>{});
   loadModule();checkSession();
 })();
 </script>
