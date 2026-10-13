@@ -1,6 +1,6 @@
 const json = (data, status = 200) => Response.json(data, { status });
 const id = () => crypto.randomUUID();
-const titleFrom = text => text.trim().replace(/\s+/g, " ").slice(0, 64) || "New chat";
+const titleFrom = text => String(text ?? "New chat").trim().replace(/\s+/g, " ").slice(0, 64) || "New chat";
 async function ownsConversation(db, conversationId, userId) {
   return db.prepare("SELECT id,title FROM conversations WHERE id=? AND user_id=?").bind(conversationId, userId).first();
 }
