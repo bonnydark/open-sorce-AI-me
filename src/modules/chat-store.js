@@ -1,7 +1,7 @@
 const json = (data, status = 200) => Response.json(data, { status });
 const id = () => crypto.randomUUID();
 const titleFrom = text => String(text ?? "New chat").trim().replace(/\s+/g, " ").slice(0, 64) || "New chat";
-async function ownsConversation(db, conversationId, userId) {
+export async function ownsConversation(db, conversationId, userId) {
   return db.prepare("SELECT id,title FROM conversations WHERE id=? AND user_id=?").bind(conversationId, userId).first();
 }
 export async function listChats(db, userId) {
@@ -55,5 +55,3 @@ export async function handleChats(request, env, url, user) {
   }
   return json({ error: "Not found." }, 404);
 }
-// Other functions are exported at their declarations above; only this helper needs a separate export.
-export { ownsConversation };
