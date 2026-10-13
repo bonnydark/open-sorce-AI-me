@@ -70,6 +70,11 @@ export default {
                     conversationId = created.id;
                     chat = created;
                   }
+                  if (chat && String(chat.title || "").trim().toLowerCase() === "new chat") {
+                    const nextTitle = message.replace(/\s+/g, " ").slice(0, 64) || "New chat";
+                    await env.DB.prepare("UPDATE conversations SET title=? WHERE id=? AND user_id=? AND title='New chat'").bind(nextTitle, conversationId, user.id).run();
+                    chat = { ...chat, title: nextTitle };
+                  }
                   await appendMessage(env.DB, user.id, conversationId, "user", message);
                   try {
                     const context = await recentContext(env.DB, user.id, conversationId, 24);
