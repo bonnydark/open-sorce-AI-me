@@ -19,7 +19,7 @@ export default {
       if (message.length > 20000) return Response.json({ error: "Message is too long (20,000 characters max)." }, { status: 413 });
 
       try {
-        const result = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        const result = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
           messages: [
             {
               role: "system",
