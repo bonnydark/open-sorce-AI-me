@@ -14,18 +14,37 @@ export default {
       let body;
       try { body = await request.json(); }
       catch { return Response.json({ error: "Expected a JSON request body." }, { status: 400 }); }
+
       const message = typeof body?.message === "string" ? body.message.trim() : "";
       if (!message) return Response.json({ error: "Message is required." }, { status: 400 });
       if (message.length > 20000) return Response.json({ error: "Message is too long (20,000 characters max)." }, { status: 413 });
+
+      // Accept only a small, validated conversation window from the dedicated AI module.
+      const supplied = Array.isArray(body?.messages) ? body.messages : [{ role: "user", content: message }];
+      const conversation = supplied
+        .filter(item =>
+          item &&
+          (item.role === "user" || item.role === "assistant") &&
+          typeof item.content === "string" &&
+          item.content.trim().length > 0
+        )
+        .slice(-12)
+        .map(item => ({ role: item.role, content: item.content.slice(0, 20000) }));
+
+      // Ensure the current prompt is included even if a malformed client omitted it.
+      if (!conversation.length || conversation[conversation.length - 1].role !== "user" ||
+          conversation[conversation.length - 1].content !== message) {
+        conversation.push({ role: "user", content: message });
+      }
 
       try {
         const result = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
           messages: [
             {
               role: "system",
-              content: "You are Open Source AI, a direct, capable assistant. Be clear, practical, and non-preachy. Help with programming, research, writing, analysis, and creative tasks. Be honest about uncertainty. Do not assist with instructions that would meaningfully enable serious harm."
+              content: "You are Open Source AI, an independent modular assistant. Be clear, practical, and helpful with programming, analysis, writing, and creative tasks. Use prior conversation for context. When writing code, use fenced code blocks and identify the language. Be honest about uncertainty and do not claim to have executed actions you have not performed. Do not assist with instructions that would meaningfully enable serious harm."
             },
-            { role: "user", content: message }
+            ...conversation
           ],
           max_tokens: 1800
         });
