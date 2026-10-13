@@ -4,7 +4,8 @@ const defaults = {
   typewriterSpeed: 18,
   codeBlocks: true,
   answerStyle: "balanced",
-  activeModule: "ai-engine"
+  activeModule: "ai-engine",
+  autoMemories: false
 };
 const json = (data, status = 200) => Response.json(data, { status });
 const allowedThemes = new Set(["redline", "midnight", "ocean", "violet", "light"]);
@@ -16,7 +17,8 @@ function cleanSettings(input = {}) {
     typewriterSpeed: Math.max(0, Math.min(80, Number.isFinite(Number(input.typewriterSpeed)) ? Math.round(Number(input.typewriterSpeed)) : defaults.typewriterSpeed)),
     codeBlocks: input.codeBlocks !== false,
     answerStyle: allowedStyles.has(input.answerStyle) ? input.answerStyle : defaults.answerStyle,
-    activeModule: "ai-engine"
+    activeModule: "ai-engine",
+    autoMemories: input.autoMemories === true
   };
 }
 export async function getUserSettings(db, userId) {
