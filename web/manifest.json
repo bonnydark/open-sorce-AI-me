@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Open Source AI Me",
+  "short_name": "AI Me",
+  "description": "A modular AI workspace with private account-based chat history.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#090909",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
