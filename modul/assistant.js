@@ -1,29 +1,49 @@
 /**
- * Open Source AI Me — starter assistant module.
- * This is a lightweight demo, not a trained language model.
- * Replace or extend respond() to connect to your own secure backend.
+ * Open Source AI Me — modular assistant adapter.
+ * The browser sends prompts to a same-origin backend endpoint (/api/chat).
+ * Configure the model provider and keep all provider secrets on the server.
  */
-export const name = "Open Source Assistant";
-export const version = "0.1.0";
+export const name = "Open Source AI";
+export const version = "0.2.0";
+export const mode = "api";
+
+const API_PATH = "/api/chat";
 
 export async function respond(prompt) {
-  const text = String(prompt || "").trim();
-  const q = text.toLowerCase();
-  if (!text) return "Write a message and I'll try to help.";
-  if (/^(hi|hello|hey|xin chào|chào bạn|chao)$/.test(q)) {
-    return "Hello! 👋 I'm the Open Source AI Me starter module. What would you like to build?";
+  const text = String(prompt ?? "").trim();
+  if (!text) return "Nhập câu hỏi trước nhé.";
+  if (text.length > 20000) return "Tin nhắn quá dài (tối đa 20.000 ký tự). Hãy chia thành vài phần.";
+
+  if (typeof fetch !== "function" || typeof location === "undefined") {
+    return "Môi trường này chưa hỗ trợ gọi API. Hãy chạy module trong trình duyệt và cấu hình backend.";
   }
-  if (q.includes("who are you") || q.includes("bạn là ai") || q.includes("ban la ai")) {
-    return "I'm Open Source AI Me, a modular assistant demo loaded from your GitHub repository. I'm a starter module, not a trained foundation model yet.";
+
+  let response;
+  try {
+    response = await fetch(API_PATH, {
+      method: "POST",
+      headers: { "content-type": "application/json", "accept": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ message: text })
+    });
+  } catch {
+    return "Chưa kết nối được AI backend. Cần triển khai endpoint POST /api/chat trên Cloudflare Worker rồi thử lại.";
   }
-  if (q.includes("how") && (q.includes("work") || q.includes("load"))) {
-    return "The web app loads source/loader.js, reads source/manifest.json, fetches the module in modul/, then calls its exported respond(prompt) function. Publish a new trusted module version to update the behavior.";
+
+  if (response.status === 404 || response.status === 405) {
+    return "Modul đã hoạt động, nhưng Worker chưa có endpoint POST /api/chat. Cần nối backend với một model AI để nhận câu trả lời thực sự.";
   }
-  if (q.includes("github")) {
-    return "This project is stored at https://github.com/bonnydark/open-sorce-AI-me. The web UI and source loader are separated from the assistant module so you can replace the module independently.";
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    return "AI backend trả về lỗi HTTP " + response.status + (detail ? ": " + detail.slice(0, 300) : "") + ". Kiểm tra cấu hình Worker và model.";
   }
-  if (q.includes("api key") || q.includes("apikey") || q.includes("api khóa")) {
-    return "Keep AI provider API keys on a backend such as a Cloudflare Worker. Never paste secret keys into web/index.html or a public GitHub repository.";
-  }
-  return "I received: “" + text + "”\n\nThis starter uses simple local demo logic, so it doesn't yet have the reasoning ability of a full AI model. Next step: connect a model through a backend API, then keep this module as the swappable interface.";
+
+  let data;
+  try { data = await response.json(); }
+  catch { return "AI backend không trả JSON hợp lệ. Kiểm tra response của /api/chat."; }
+
+  const answer = data.reply ?? data.response ?? data.answer ?? data.output_text;
+  if (typeof answer === "string" && answer.trim()) return answer;
+  if (data.error) return "AI backend: " + String(data.error);
+  return "AI backend đã phản hồi nhưng không có trường reply/response/answer.";
 }
