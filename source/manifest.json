@@ -1,6 +1,6 @@
 {
   "name": "Open Source AI Engine",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "entry": "modul/ai-engine.js",
-  "description": "Dedicated modular AI engine with conversation memory and a provider-safe Worker backend"
+  "description": "Dedicated AI adapter with authenticated, account-specific server-side conversation history"
 }
