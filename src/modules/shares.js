@@ -30,6 +30,7 @@ export async function handleShareOwner(request, env, user, url) {
 }
 
 export async function getSharedChat(request, env, url) {
+  if (!env.DB) return json({ error: "Database is not configured." }, 503);
   const token = url.pathname.split("/").filter(Boolean).pop() || "";
   if (!/^[a-f0-9]{64}$/i.test(token)) return json({ error: "Shared conversation not found." }, 404);
   const share = await env.DB.prepare("SELECT conversation_id FROM chat_shares WHERE token_hash=? AND revoked_at IS NULL").bind(await hash(token)).first();
