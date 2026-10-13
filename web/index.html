@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090b12">
+<meta name="description" content="Open Source AI Me — a lightweight modular AI assistant.">
+<title>Open Source AI Me</title>
+<style>
+:root{color-scheme:dark;--bg:#090b12;--panel:#111522;--panel2:#171c2b;--line:#282f43;--text:#f3f5fb;--muted:#9aa4ba;--accent:#8b7cff;--accent2:#5de1c4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#28234b 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+button,input{font:inherit}button{cursor:pointer}.shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh;max-width:1500px;margin:auto}.side{padding:24px 18px;border-right:1px solid var(--line);background:#0c0f18cc}.brand{display:flex;gap:12px;align-items:center;font-weight:750;font-size:17px}.logo{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#090b12;font-weight:900}.tag{color:var(--muted);font-size:12px;margin:4px 0 30px 50px}.navlabel{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#778199;margin:22px 10px 9px}.navitem{padding:11px 12px;border-radius:11px;color:#c4cadd;display:flex;gap:10px;align-items:center}.navitem.active{background:#292541;color:#fff}.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-top:30px;padding:12px;border:1px solid var(--line);border-radius:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);box-shadow:0 0 12px #5de1c477}.main{padding:30px clamp(18px,4vw,58px);display:flex;flex-direction:column;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.eyebrow{color:var(--accent2);text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:750}.top h1{font-size:clamp(25px,4vw,38px);letter-spacing:-.04em;margin:7px 0}.sub{color:var(--muted);margin:0}.pill{border:1px solid var(--line);border-radius:99px;padding:7px 12px;color:#c8cce0;font-size:12px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:28px 0}.metric,.chatbox,.modulecard{background:linear-gradient(145deg,#151a29,#10131d);border:1px solid var(--line);border-radius:18px}.metric{padding:17px}.metric small{color:var(--muted)}.metric strong{display:block;font-size:21px;margin-top:7px}.metric .tiny{font-size:12px;color:var(--accent2);margin-top:3px}.chatbox{display:flex;flex-direction:column;min-height:430px;flex:1;overflow:hidden}.chathead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.chathead h2{font-size:15px;margin:0}.chathead p{font-size:12px;color:var(--muted);margin:3px 0 0}.messages{padding:22px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:auto;max-height:52vh}.msg{max-width:min(760px,92%);padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:#171c2b;white-space:pre-wrap;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:#292541;border-color:#47406d}.msg .who{font-size:11px;color:var(--accent2);margin-bottom:5px;font-weight:750}.composer{display:flex;gap:10px;padding:16px;border-top:1px solid var(--line)}.composer input{flex:1;min-width:0;border:1px solid var(--line);background:#0a0d15;color:var(--text);padding:13px 15px;border-radius:12px;outline:none}.composer input:focus{border-color:var(--accent)}.send{border:0;border-radius:12px;padding:0 20px;background:var(--accent);color:#fff;font-weight:750}.send:disabled{opacity:.5;cursor:wait}.bottom{color:#737d94;font-size:11px;text-align:center;padding:16px}.modulecard{padding:16px;margin-top:14px}.modulecard strong{font-size:13px}.modulecard p{color:var(--muted);font-size:12px;margin:5px 0}.error{color:#ff9caa}.link{color:var(--accent2);text-decoration:none}
+@media(max-width:760px){.shell{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line);padding:15px 18px}.tag,.navlabel,.navitem,.side .status{display:none}.main{padding:23px 15px}.grid{grid-template-columns:1fr;gap:9px;margin:18px 0}.metric{padding:12px 15px}.metric strong{font-size:18px}.messages{max-height:none;min-height:280px;padding:15px}.chatbox{min-height:440px}.send{padding:0 14px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side">
+  <div class="brand"><div class="logo">AI</div><span>Open Source AI Me</span></div>
+  <div class="tag">MODULAR ASSISTANT · 0.1.0</div>
+  <div class="navlabel">Workspace</div><div class="navitem active">✦ &nbsp; AI Assistant</div><div class="navitem">▦ &nbsp; Modules</div><div class="navitem">⚙ &nbsp; Settings</div>
+  <div class="status"><span class="dot"></span><span id="connection">Loading module…</span></div>
+  <div class="modulecard"><strong>Active module</strong><p id="moduleName">Discovering module…</p><p id="moduleVersion">Checking manifest</p></div>
+</aside>
+<main class="main">
+  <header class="top"><div><div class="eyebrow">Your modular AI workspace</div><h1>What can we build today?</h1><p class="sub">A small web app powered by modules fetched from GitHub.</p></div><span class="pill" id="buildStatus">STARTING</span></header>
+  <section class="grid">
+    <div class="metric"><small>Runtime</small><strong>Browser</strong><div class="tiny">No server required for demo</div></div>
+    <div class="metric"><small>Module source</small><strong>GitHub</strong><div class="tiny">Manifest-driven loading</div></div>
+    <div class="metric"><small>Model connection</small><strong id="modelState">Demo mode</strong><div class="tiny">No API key configured</div></div>
+  </section>
+  <section class="chatbox">
+    <div class="chathead"><div><h2>AI Assistant</h2><p>Ask a question to try the installed module</p></div><span class="pill">● Ready to chat</span></div>
+    <div class="messages" id="messages" aria-live="polite"><div class="msg"><div class="who">AI MODULE</div>Hi! I'm your modular assistant starter. The website loads its assistant module from your GitHub repository. Ask me something, or ask how this project works.</div></div>
+    <form class="composer" id="chatForm"><input id="prompt" autocomplete="off" placeholder="Message your AI module…" aria-label="Message your AI module"><button class="send" id="sendBtn" type="submit">Send ↗</button></form>
+  </section>
+  <div class="bottom">Open Source AI Me · Keep secret API keys on a server, never in frontend code.</div>
+</main>
+</div>
+<script>
+(() => {
+ const OWNER='bonnydark', REPO='open-sorce-AI-me', BRANCH='main';
+ const rawBase='https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/'+BRANCH+'/';
+ const messages=document.getElementById('messages'), form=document.getElementById('chatForm'), input=document.getElementById('prompt'), send=document.getElementById('sendBtn');
+ let activeModule=null;
+ function addMessage(who,body,kind=''){const el=document.createElement('div');el.className='msg '+kind;const label=document.createElement('div');label.className='who';label.textContent=who;const text=document.createElement('div');text.textContent=body;el.append(label,text);messages.appendChild(el);messages.scrollTop=messages.scrollHeight;}
+ async function loadModule(){
+   try{
+    const loaderUrl='https://cdn.jsdelivr.net/gh/'+OWNER+'/'+REPO+'@'+BRANCH+'/source/loader.js';
+    const response=await fetch(loaderUrl,{cache:'no-store'}); if(!response.ok) throw new Error('Loader HTTP '+response.status);
+    const source=await response.text(); const blob=URL.createObjectURL(new Blob([source+'\n//# sourceURL=ai-module-loader.js'],{type:'text/javascript'}));
+    try { const loader=await import(blob); activeModule=await loader.loadModule({rawBase}); }
+    finally { URL.revokeObjectURL(blob); }
+    document.getElementById('connection').textContent='Module loaded';
+    document.getElementById('buildStatus').textContent='ONLINE';
+    document.getElementById('moduleName').textContent=activeModule.name||'Assistant';
+    document.getElementById('moduleVersion').textContent='Version '+(activeModule.version||'unknown');
+   }catch(error){
+    document.getElementById('connection').textContent='Module unavailable';
+    document.getElementById('buildStatus').textContent='OFFLINE';
+    document.getElementById('moduleName').textContent='Could not load module';
+    document.getElementById('moduleVersion').textContent=error.message;
+    addMessage('SYSTEM','Could not load the GitHub module: '+error.message+'. Check that the repository is public and the files exist on the main branch.');
+   }
+ }
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();const prompt=input.value.trim();if(!prompt)return;
+  addMessage('YOU',prompt,'user');input.value='';send.disabled=true;
+  try{
+   if(!activeModule) throw new Error('The AI module has not loaded yet. Refresh the page and try again.');
+   const answer=await activeModule.respond(prompt);
+   addMessage('AI MODULE',typeof answer==='string'?answer:JSON.stringify(answer,null,2));
+  }catch(error){addMessage('SYSTEM',error.message);}
+  finally{send.disabled=false;input.focus();}
+ });
+ loadModule();
+})();
+</script>
+</body>
+</html>
