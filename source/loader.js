@@ -19,7 +19,13 @@ export async function loadModule(options = {}) {
   try {
     const loaded = await import(moduleUrl);
     if (typeof loaded.respond !== "function") throw new Error("Module must export an async respond(prompt) function");
-    return { ...loaded, name: loaded.name || manifest.name, version: loaded.version || manifest.version };
+    // Preserve live ES-module exports: spreading `loaded` snapshots mutable exports such as currentConversationId.
+    return {
+      ...loaded,
+      get currentConversationId() { return loaded.currentConversationId || null; },
+      name: loaded.name || manifest.name,
+      version: loaded.version || manifest.version
+    };
   } finally {
     URL.revokeObjectURL(moduleUrl);
   }
