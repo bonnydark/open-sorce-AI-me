@@ -1,125 +1,81 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#090909">
-<meta name="description" content="Open Source AI Me — a modular AI workspace.">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090909"><meta name="description" content="Open Source AI Me — a modular AI workspace with private account-based chat history.">
 <title>Open Source AI Me</title>
 <style>
-:root{color-scheme:dark;--bg:#080808;--panel:#111;--panel2:#191111;--line:#342020;--text:#f7f4f4;--muted:#a99a9a;--accent:#ff2638;--accent2:#ff5b35;--glow:#ff263844}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#451016 0,transparent 34%),radial-gradient(ellipse at 0% 90%,#210b0d 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
-button,input{font:inherit}button{cursor:pointer}.shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh;max-width:1500px;margin:auto}.side{padding:24px 18px;border-right:1px solid var(--line);background:#0b0909eF}.brand{display:flex;gap:12px;align-items:center;font-weight:800;font-size:17px}.logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#ff2638,#ff6a35);color:#090909;font-weight:950;box-shadow:0 0 24px var(--glow)}.tag{color:var(--muted);font-size:12px;margin:4px 0 30px 50px}.navlabel{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#8e7272;margin:22px 10px 9px}.navitem{padding:11px 12px;border-radius:11px;color:#d4c6c6;display:flex;gap:10px;align-items:center}.navitem.active{background:#321216;color:#fff;border:1px solid #572027}.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-top:30px;padding:12px;border:1px solid var(--line);border-radius:12px}.dot{width:8px;height:8px;border-radius:50%;background:#ff433e;box-shadow:0 0 12px #ff433e77}.main{padding:30px clamp(18px,4vw,58px);display:flex;flex-direction:column;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:850}.top h1{font-size:clamp(25px,4vw,38px);letter-spacing:-.04em;margin:7px 0}.sub{color:var(--muted);margin:0}.pill{border:1px solid #522126;border-radius:99px;padding:7px 12px;color:#f1caca;font-size:12px;background:#190b0c}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:28px 0}.metric,.chatbox,.modulecard{background:linear-gradient(145deg,#171313,#0e0d0d);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 40px #0003}.metric{padding:17px}.metric small{color:var(--muted)}.metric strong{display:block;font-size:21px;margin-top:7px}.metric .tiny{font-size:12px;color:#ff6a55;margin-top:3px}.chatbox{display:flex;flex-direction:column;min-height:430px;flex:1;overflow:hidden}.chathead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.chathead h2{font-size:15px;margin:0}.chathead p{font-size:12px;color:var(--muted);margin:3px 0 0}.messages{padding:22px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:auto;max-height:52vh}.msg{max-width:min(760px,92%);padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:#191414;white-space:pre-wrap;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:#351116;border-color:#75202a}.msg .who{font-size:11px;color:#ff625e;margin-bottom:5px;font-weight:800;letter-spacing:.05em}.msg-body{white-space:pre-wrap;overflow-wrap:anywhere}.codewrap{margin:12px 0 2px;border:1px solid #4b272b;border-radius:12px;overflow:hidden;background:#080808;white-space:normal}.codehead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#211012;border-bottom:1px solid #4b272b;color:#ff8d8d;font-size:11px;text-transform:uppercase;letter-spacing:.1em}.codehead button{border:1px solid #5b2b30;border-radius:7px;padding:4px 8px;background:#160a0b;color:#ffdede;font-size:11px}.codewrap pre{margin:0;padding:14px;overflow:auto;max-width:100%;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#e8e8e8;tab-size:2}.codewrap code{white-space:pre;overflow-wrap:normal}.composer{display:flex;gap:10px;padding:16px;border-top:1px solid var(--line);background:#0c0a0a}.composer input{flex:1;min-width:0;border:1px solid #382020;background:#080808;color:var(--text);padding:13px 15px;border-radius:12px;outline:none}.composer input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}.send{border:0;border-radius:12px;padding:0 20px;background:linear-gradient(135deg,#ff2638,#ff5b35);color:#fff;font-weight:850;box-shadow:0 5px 20px var(--glow)}.send:disabled{opacity:.5;cursor:wait}.bottom{color:#766767;font-size:11px;text-align:center;padding:16px}.modulecard{padding:16px;margin-top:14px}.modulecard strong{font-size:13px}.modulecard p{color:var(--muted);font-size:12px;margin:5px 0}.error{color:#ff9caa}.link{color:var(--accent2);text-decoration:none}
-@media(max-width:760px){.shell{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line);padding:15px 18px}.tag,.navlabel,.navitem,.side .status{display:none}.main{padding:23px 15px}.grid{grid-template-columns:1fr;gap:9px;margin:18px 0}.metric{padding:12px 15px}.metric strong{font-size:18px}.messages{max-height:none;min-height:280px;padding:15px}.chatbox{min-height:440px}.send{padding:0 14px}}
+:root{color-scheme:dark;--bg:#080808;--panel:#111;--line:#342020;--text:#f7f4f4;--muted:#a99a9a;--accent:#ff2638;--accent2:#ff5b35;--glow:#ff263844}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#451016 0,transparent 34%),radial-gradient(ellipse at 0 90%,#210b0d 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.shell{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:100vh;max-width:1600px;margin:auto}.side{padding:22px 16px;border-right:1px solid var(--line);background:#0b0909ef;display:flex;flex-direction:column;min-width:0}.brand{display:flex;gap:11px;align-items:center;font-weight:800;font-size:16px}.logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#ff2638,#ff6a35);color:#090909;font-weight:950;box-shadow:0 0 24px var(--glow)}.tag{color:var(--muted);font-size:10px;margin:4px 0 24px 49px;letter-spacing:.1em}.newchat,.secondary,.authbtn{border:1px solid #522126;border-radius:10px;padding:10px 12px;background:#1b0d0e;color:#ffe9e9;font-weight:700}.newchat{width:100%;text-align:left}.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#8e7272;margin:23px 8px 8px}.history{display:flex;flex-direction:column;gap:5px;overflow:auto;max-height:52vh}.chatlink{border:1px solid transparent;background:transparent;color:#cfc1c1;text-align:left;padding:9px 10px;border-radius:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.chatlink:hover,.chatlink.active{background:#271012;border-color:#522126;color:white}.sidebottom{margin-top:auto;padding-top:18px}.account{border-top:1px solid var(--line);padding-top:15px;display:flex;align-items:center;gap:10px;min-width:0}.avatar{width:34px;height:34px;flex:none;border-radius:50%;background:#381419;color:#ffb6b6;display:grid;place-items:center;font-weight:800}.accountinfo{min-width:0;flex:1}.accountinfo strong,.accountinfo small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.accountinfo strong{font-size:12px}.accountinfo small{font-size:11px;color:var(--muted)}.logout{border:1px solid var(--line);background:#100d0d;color:#cdbaba;border-radius:8px;padding:6px 8px;font-size:11px}.main{padding:30px clamp(18px,4vw,58px);display:flex;flex-direction:column;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:850}.top h1{font-size:clamp(25px,4vw,38px);letter-spacing:-.04em;margin:7px 0}.sub{color:var(--muted);margin:0}.pill{border:1px solid #522126;border-radius:99px;padding:7px 12px;color:#f1caca;font-size:12px;background:#190b0c}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:26px 0}.metric,.chatbox,.modulecard{background:linear-gradient(145deg,#171313,#0e0d0d);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 40px #0003}.metric{padding:15px}.metric small{color:var(--muted)}.metric strong{display:block;font-size:18px;margin-top:5px}.metric .tiny{font-size:11px;color:#ff6a55;margin-top:3px}.chatbox{display:flex;flex-direction:column;min-height:420px;flex:1;overflow:hidden}.chathead{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.chathead h2{font-size:15px;margin:0}.chathead p{font-size:12px;color:var(--muted);margin:3px 0 0}.messages{padding:22px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:auto;max-height:55vh}.msg{max-width:min(800px,94%);padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:#191414;white-space:pre-wrap;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:#351116;border-color:#75202a}.msg .who{font-size:10px;color:#ff625e;margin-bottom:5px;font-weight:800;letter-spacing:.08em}.msg-body{white-space:pre-wrap;overflow-wrap:anywhere}.codewrap{margin:12px 0 2px;border:1px solid #4b272b;border-radius:12px;overflow:hidden;background:#080808;white-space:normal}.codehead{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#211012;border-bottom:1px solid #4b272b;color:#ff8d8d;font-size:11px}.codehead button{border:1px solid #5b2b30;border-radius:7px;padding:4px 8px;background:#160a0b;color:#ffdede;font-size:11px}.codewrap pre{margin:0;padding:14px;overflow:auto;font:13px/1.65 ui-monospace,monospace;color:#e8e8e8}.codewrap code{white-space:pre}.composer{display:flex;gap:10px;padding:15px;border-top:1px solid var(--line);background:#0c0a0a}.composer input,.authform input{min-width:0;border:1px solid #382020;background:#080808;color:var(--text);padding:13px 14px;border-radius:11px;outline:none}.composer input{flex:1}.composer input:focus,.authform input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}.send{border:0;border-radius:11px;padding:0 20px;background:linear-gradient(135deg,#ff2638,#ff5b35);color:white;font-weight:850}.send:disabled{opacity:.5;cursor:wait}.bottom{color:#766767;font-size:11px;text-align:center;padding:14px}.status{font-size:12px;color:var(--muted)}.error{color:#ff9caa}.empty{color:var(--muted);text-align:center;margin:auto;padding:35px 10px}.authgate{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:#050505ed;backdrop-filter:blur(16px)}.authcard{width:min(430px,100%);border:1px solid #55242a;border-radius:22px;background:linear-gradient(145deg,#1b1112,#0b0b0b);padding:28px;box-shadow:0 25px 100px #000a}.authbrand{display:flex;align-items:center;gap:12px;margin-bottom:20px}.authcard h2{margin:0 0 7px;font-size:25px}.authcard p{color:var(--muted);font-size:13px;margin:0 0 20px}.authform{display:flex;flex-direction:column;gap:11px}.authform input{width:100%}.authbtn{background:linear-gradient(135deg,#ff2638,#ff5b35);border:0;padding:12px}.authswitch{margin-top:17px;text-align:center;color:var(--muted);font-size:12px}.textbtn{background:none;border:0;color:#ff8b80;text-decoration:underline}.authmessage{font-size:12px;min-height:18px;margin-top:10px;color:#ff9caa}.hidden{display:none!important}
+@media(max-width:760px){.shell{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line);padding:14px}.tag{display:none}.side>.newchat,.side>.navlabel,.history{display:none}.sidebottom{padding-top:12px}.main{padding:20px 13px}.grid{grid-template-columns:1fr;gap:8px;margin:16px 0}.metric{padding:10px 13px}.metric strong{font-size:16px}.messages{max-height:none;min-height:270px;padding:14px}.chatbox{min-height:430px}.send{padding:0 14px}.sidebottom{margin-top:0}.account{padding-top:10px}}
 </style>
 </head>
 <body>
 <div class="shell">
 <aside class="side">
-  <div class="brand"><div class="logo">AI</div><span>Open Source AI Me</span></div>
-  <div class="tag">MODULAR ASSISTANT · 0.2.0</div>
-  <div class="navlabel">Workspace</div><div class="navitem active">✦ &nbsp; AI Assistant</div><div class="navitem">▦ &nbsp; Modules</div><div class="navitem">⚙ &nbsp; Settings</div>
-  <div class="status"><span class="dot"></span><span id="connection">Loading module…</span></div>
-  <div class="modulecard"><strong>Active module</strong><p id="moduleName">Discovering module…</p><p id="moduleVersion">Checking manifest</p></div>
+ <div class="brand"><div class="logo">AI</div><span>Open Source AI Me</span></div><div class="tag">MODULAR ASSISTANT · 0.4.0</div>
+ <button class="newchat" id="newChat">＋ &nbsp; New chat</button><div class="navlabel">Your chat history</div><div class="history" id="history"><div class="status">Sign in to load your chats.</div></div>
+ <div class="sidebottom"><div class="account"><div class="avatar" id="avatar">?</div><div class="accountinfo"><strong id="accountName">Not signed in</strong><small id="accountEmail">Private account history</small></div><button class="logout" id="logout">Sign out</button></div></div>
 </aside>
 <main class="main">
-  <header class="top"><div><div class="eyebrow">Redline intelligence workspace</div><h1>Build without the noise.</h1><p class="sub">A modular assistant workspace. Connect a model backend to enable real AI reasoning.</p></div><span class="pill" id="buildStatus">STARTING</span></header>
-  <section class="grid">
-    <div class="metric"><small>Runtime</small><strong>Browser</strong><div class="tiny">Responsive · lightweight</div></div>
-    <div class="metric"><small>Module source</small><strong>GitHub</strong><div class="tiny">Manifest-driven loading</div></div>
-    <div class="metric"><small>AI connection</small><strong id="modelState">Backend required</strong><div class="tiny">Secrets stay server-side</div></div>
-  </section>
-  <section class="chatbox">
-    <div class="chathead"><div><h2>AI Assistant</h2><p>Direct answers, coding help, analysis and creative work</p></div><span class="pill">● Module ready</span></div>
-    <div class="messages" id="messages" aria-live="polite"><div class="msg"><div class="who">AI MODULE</div>Welcome to Open Source AI Me. This is the modular chat interface. Connect a model API through your Worker backend for real AI responses.</div></div>
-    <form class="composer" id="chatForm"><input id="prompt" autocomplete="off" placeholder="Message your AI module…" aria-label="Message your AI module"><button class="send" id="sendBtn" type="submit">Send ↗</button></form>
-  </section>
-  <div class="bottom">Open Source AI Me · Never place private provider API keys in browser code or public GitHub.</div>
+ <header class="top"><div><div class="eyebrow">Redline intelligence workspace</div><h1>Build without the noise.</h1><p class="sub">Your chats are saved to your account and synced through the backend.</p></div><span class="pill" id="buildStatus">CHECKING</span></header>
+ <section class="grid"><div class="metric"><small>Runtime</small><strong>Cloudflare Worker</strong><div class="tiny">Private API · same-origin</div></div><div class="metric"><small>AI engine</small><strong id="modelState">Modular</strong><div class="tiny">Provider adapter separated</div></div><div class="metric"><small>Chat storage</small><strong id="storageState">Checking</strong><div class="tiny">Account-scoped D1 history</div></div></section>
+ <section class="chatbox"><div class="chathead"><div><h2>AI Assistant</h2><p id="chatSubtitle">Sign in to start a private conversation.</p></div><span class="pill" id="moduleStatus">MODULE</span></div><div class="messages" id="messages" aria-live="polite"><div class="empty">Sign in or create an account to begin.</div></div><form class="composer" id="chatForm"><input id="prompt" autocomplete="off" placeholder="Message your AI module…" aria-label="Message your AI module" disabled><button class="send" id="sendBtn" type="submit" disabled>Send ↗</button></form></section>
+ <div class="bottom">Open Source AI Me · Passwords are hashed on the server. Never put private API keys in browser code.</div>
 </main>
 </div>
+<section class="authgate" id="authGate"><div class="authcard"><div class="authbrand"><div class="logo">AI</div><div><strong>Open Source AI Me</strong><div class="status">Your account · Your conversations</div></div></div><h2 id="authTitle">Welcome back.</h2><p id="authDescription">Sign in to access your saved chat history from any device.</p><form class="authform" id="authForm"><input id="displayName" class="hidden" maxlength="80" autocomplete="name" placeholder="Your name"><input id="email" type="email" required autocomplete="email" maxlength="254" placeholder="Email address"><input id="password" type="password" required minlength="8" maxlength="256" autocomplete="current-password" placeholder="Password (8+ characters)"><button class="authbtn" id="authSubmit" type="submit">Sign in</button></form><div class="authmessage" id="authMessage" role="status"></div><div class="authswitch"><span id="switchPrompt">New here?</span> <button class="textbtn" id="authSwitch" type="button">Create an account</button></div></div></section>
 <script>
 (() => {
- const OWNER='bonnydark', REPO='open-sorce-AI-me', BRANCH='main';
- const rawBase='https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/'+BRANCH+'/';
- const messages=document.getElementById('messages'), form=document.getElementById('chatForm'), input=document.getElementById('prompt'), send=document.getElementById('sendBtn');
- let activeModule=null;
- function addMessage(who,body,kind=''){
-  const el=document.createElement('div');el.className='msg '+kind;
-  const label=document.createElement('div');label.className='who';label.textContent=who;
-  const text=document.createElement('div');text.className='msg-body';text.textContent=body;
-  el.append(label,text);messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return text;
+ const OWNER='bonnydark',REPO='open-sorce-AI-me',BRANCH='main',rawBase='https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/'+BRANCH+'/';
+ const $=id=>document.getElementById(id);
+ const messages=$('messages'),form=$('chatForm'),input=$('prompt'),send=$('sendBtn');
+ let activeModule=null,activeChatId=null,currentUser=null,authMode='login',busy=false;
+ async function api(path,options={}) {
+  const response=await fetch(path,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...(options.headers||{})}});
+  let data={};try{data=await response.json()}catch{}
+  if(!response.ok)throw new Error(data.error||('Request failed: HTTP '+response.status));
+  return data;
  }
+ function addMessage(who,body,kind=''){
+  const el=document.createElement('div');el.className='msg '+kind;const label=document.createElement('div');label.className='who';label.textContent=who;
+  const text=document.createElement('div');text.className='msg-body';text.textContent=body;el.append(label,text);messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return text;
+ }
+ function showEmpty(text){messages.replaceChildren();const el=document.createElement('div');el.className='empty';el.textContent=text;messages.append(el)}
  function addTypingAnswer(who,body){
-  const host=addMessage(who,'');host.textContent='';
-  const raw=String(body??'');const parts=[];
-  const re=/```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/g;
-  let last=0,match;
-  while((match=re.exec(raw))){
-   if(match.index>last)parts.push({type:'text',value:raw.slice(last,match.index)});
-   parts.push({type:'code',lang:match[1]||'code',value:match[2]});last=re.lastIndex;
-  }
-  if(last<raw.length)parts.push({type:'text',value:raw.slice(last)});
-  if(!parts.length)parts.push({type:'text',value:raw});
-  let p=0;
-  const typeNext=()=>{
-   if(p>=parts.length)return;
-   const part=parts[p++];let target;
-   if(part.type==='code'){
-    const wrap=document.createElement('section');wrap.className='codewrap';
-    const head=document.createElement('div');head.className='codehead';
-    const lang=document.createElement('span');lang.textContent=part.lang;
-    const copy=document.createElement('button');copy.type='button';copy.textContent='Copy code';
-    copy.addEventListener('click',()=>{
-     if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(part.value).then(()=>copy.textContent='Copied!').catch(()=>copy.textContent='Copy failed');
-     }
-    });
-    head.append(lang,copy);const pre=document.createElement('pre');
-    const code=document.createElement('code');code.textContent='';pre.append(code);
-    wrap.append(head,pre);host.append(wrap);target=code;
-   }else{target=document.createElement('span');target.textContent='';host.append(target);}
-   let i=0;
-   const tick=()=>{
-    const next=Math.min(i+2,part.value.length);target.textContent+=part.value.slice(i,next);i=next;
-    messages.scrollTop=messages.scrollHeight;
-    if(i<part.value.length)setTimeout(tick,18);else typeNext();
-   };
-   tick();
-  };
-  typeNext();
+  const host=addMessage(who,'');host.textContent='';const raw=String(body??''),parts=[];const re=/```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/g;let last=0,match;
+  while((match=re.exec(raw))){if(match.index>last)parts.push({type:'text',value:raw.slice(last,match.index)});parts.push({type:'code',lang:match[1]||'code',value:match[2]});last=re.lastIndex}
+  if(last<raw.length)parts.push({type:'text',value:raw.slice(last)});if(!parts.length)parts.push({type:'text',value:raw});let p=0;
+  const typeNext=()=>{if(p>=parts.length)return;const part=parts[p++];let target;
+   if(part.type==='code'){const wrap=document.createElement('section');wrap.className='codewrap';const head=document.createElement('div');head.className='codehead';const lang=document.createElement('span');lang.textContent=part.lang;const copy=document.createElement('button');copy.type='button';copy.textContent='Copy code';copy.addEventListener('click',()=>navigator.clipboard?.writeText(part.value).then(()=>copy.textContent='Copied!').catch(()=>copy.textContent='Copy failed'));head.append(lang,copy);const pre=document.createElement('pre');const code=document.createElement('code');pre.append(code);wrap.append(head,pre);host.append(wrap);target=code;
+   }else{target=document.createElement('span');host.append(target)}
+   let i=0;const tick=()=>{const next=Math.min(i+2,part.value.length);target.textContent+=part.value.slice(i,next);i=next;messages.scrollTop=messages.scrollHeight;if(i<part.value.length)setTimeout(tick,18);else typeNext()};tick();
+  };typeNext();
  }
  async function loadModule(){
-   try{
-    const loaderUrl='https://cdn.jsdelivr.net/gh/'+OWNER+'/'+REPO+'@'+BRANCH+'/source/loader.js';
-    const response=await fetch(loaderUrl,{cache:'no-store'}); if(!response.ok) throw new Error('Loader HTTP '+response.status);
-    const source=await response.text(); const blob=URL.createObjectURL(new Blob([source+'\n//# sourceURL=ai-module-loader.js'],{type:'text/javascript'}));
-    try { const loader=await import(blob); activeModule=await loader.loadModule({rawBase}); }
-    finally { URL.revokeObjectURL(blob); }
-    document.getElementById('connection').textContent='Module loaded';
-    document.getElementById('buildStatus').textContent='ONLINE';
-    document.getElementById('moduleName').textContent=activeModule.name||'Assistant';
-    document.getElementById('moduleVersion').textContent='Version '+(activeModule.version||'unknown');
-    document.getElementById('modelState').textContent=activeModule.mode==='api'?'API adapter':'Backend required';
-   }catch(error){
-    document.getElementById('connection').textContent='Module unavailable';
-    document.getElementById('buildStatus').textContent='OFFLINE';
-    document.getElementById('moduleName').textContent='Could not load module';
-    document.getElementById('moduleVersion').textContent=error.message;
-    addMessage('SYSTEM','Could not load the GitHub module: '+error.message+'. Check the public repository and main branch.');
-   }
+  try{const response=await fetch('https://cdn.jsdelivr.net/gh/'+OWNER+'/'+REPO+'@'+BRANCH+'/source/loader.js',{cache:'no-store'});if(!response.ok)throw new Error('Loader HTTP '+response.status);const source=await response.text();const blob=URL.createObjectURL(new Blob([source+'\n//# sourceURL=ai-module-loader.js'],{type:'text/javascript'}));try{const loader=await import(blob);activeModule=await loader.loadModule({rawBase})}finally{URL.revokeObjectURL(blob)}
+   $('moduleStatus').textContent='MODULE READY';$('modelState').textContent=activeModule.name||'AI module';
+  }catch(error){$('moduleStatus').textContent='MODULE ERROR';addMessage('SYSTEM','Could not load AI module: '+error.message)}
  }
- form.addEventListener('submit',async event=>{
-  event.preventDefault();const prompt=input.value.trim();if(!prompt)return;
-  addMessage('YOU',prompt,'user');input.value='';send.disabled=true;
-  try{
-   if(!activeModule) throw new Error('The AI module has not loaded yet. Refresh the page and try again.');
-   const answer=await activeModule.respond(prompt);
-   addTypingAnswer('AI MODULE',typeof answer==='string'?answer:JSON.stringify(answer,null,2));
-  }catch(error){addMessage('SYSTEM',error.message);}
-  finally{send.disabled=false;input.focus();}
+ function setAuthMode(mode){authMode=mode;const registering=mode==='register';$('authTitle').textContent=registering?'Create your account.':'Welcome back.';$('authDescription').textContent=registering?'Create an account to keep your conversations private and synced.':'Sign in to access your saved chat history from any device.';$('displayName').classList.toggle('hidden',!registering);$('displayName').required=registering;$('password').autocomplete=registering?'new-password':'current-password';$('authSubmit').textContent=registering?'Create account':'Sign in';$('switchPrompt').textContent=registering?'Already have an account?':'New here?';$('authSwitch').textContent=registering?'Sign in':'Create an account';$('authMessage').textContent=''}
+ $('authSwitch').addEventListener('click',()=>setAuthMode(authMode==='login'?'register':'login'));
+ $('authForm').addEventListener('submit',async event=>{event.preventDefault();$('authSubmit').disabled=true;$('authMessage').textContent='Working…';try{const body={email:$('email').value,password:$('password').value};if(authMode==='register')body.name=$('displayName').value;const data=await api('/api/auth/'+authMode,{method:'POST',body:JSON.stringify(body)});currentUser=data.user;await enterWorkspace()}catch(error){$('authMessage').textContent=error.message}finally{$('authSubmit').disabled=false}});
+ async function checkSession(){try{const data=await api('/api/auth/me');if(data.user){currentUser=data.user;await enterWorkspace()}else{$('authGate').classList.remove('hidden');$('storageState').textContent='Sign in required';$('buildStatus').textContent='SIGNED OUT'}}catch(error){$('authMessage').textContent=error.message;$('storageState').textContent='Database not ready';$('buildStatus').textContent='SETUP REQUIRED'}}
+ async function enterWorkspace(){ $('authGate').classList.add('hidden');$('accountName').textContent=currentUser.name||currentUser.email;$('accountEmail').textContent=currentUser.email;$('avatar').textContent=(currentUser.name||currentUser.email).slice(0,1).toUpperCase();$('storageState').textContent='Account history';$('buildStatus').textContent='SIGNED IN';input.disabled=false;send.disabled=false;$('chatSubtitle').textContent='Private chat history · Signed in as '+currentUser.email;await loadChats(); }
+ async function loadChats(selectFirst=false){try{const data=await api('/api/chats');const history=$('history');history.replaceChildren();if(!data.chats.length){const empty=document.createElement('div');empty.className='status';empty.textContent='No saved chats yet.';history.append(empty);if(selectFirst||!activeChatId)showEmpty('Start a conversation. Your chat history will be saved to your account.');return}
+  for(const chat of data.chats){const b=document.createElement('button');b.className='chatlink'+(chat.id===activeChatId?' active':'');b.textContent=chat.title||'New chat';b.title=chat.title;b.addEventListener('click',()=>openChat(chat.id));history.append(b)}
+  if(selectFirst||!activeChatId)await openChat(data.chats[0].id);
+ }catch(error){$('history').textContent=error.message;$('storageState').textContent='Backend error';}}
+ async function openChat(id){try{const data=await api('/api/chats/'+id);activeChatId=id;if(activeModule?.setConversation)activeModule.setConversation(id);messages.replaceChildren();if(!data.chat.messages.length)showEmpty('Send a message to begin this chat.');else for(const item of data.chat.messages)addMessage(item.role==='user'?'YOU':'AI MODULE',item.content,item.role==='user'?'user':'');$('chatSubtitle').textContent=data.chat.title||'Saved conversation';await loadChatButtonsOnly()}catch(error){addMessage('SYSTEM',error.message)}}
+ async function loadChatButtonsOnly(){try{const data=await api('/api/chats');const history=$('history');history.replaceChildren();for(const chat of data.chats){const b=document.createElement('button');b.className='chatlink'+(chat.id===activeChatId?' active':'');b.textContent=chat.title||'New chat';b.title=chat.title;b.addEventListener('click',()=>openChat(chat.id));history.append(b)}}catch{}}
+ $('newChat').addEventListener('click',async()=>{activeChatId=null;if(activeModule?.setConversation)activeModule.setConversation(null);showEmpty('New conversation. Send a message when you are ready.');$('chatSubtitle').textContent='New private conversation';await loadChatButtonsOnly();input.focus()});
+ $('logout').addEventListener('click',async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'})}catch{}currentUser=null;activeChatId=null;input.disabled=true;send.disabled=true;$('authGate').classList.remove('hidden');$('buildStatus').textContent='SIGNED OUT';showEmpty('Sign in or create an account to begin.');setAuthMode('login')});
+ form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;const prompt=input.value.trim();if(!prompt)return;busy=true;addMessage('YOU',prompt,'user');input.value='';send.disabled=true;
+  try{if(!activeModule)throw new Error('AI module is still loading. Try again in a moment.');const answer=await activeModule.respond(prompt,activeChatId);activeChatId=activeModule.currentConversationId||activeChatId;addTypingAnswer('AI MODULE',answer);await loadChatButtonsOnly()}
+  catch(error){addMessage('SYSTEM',error.message);if(/sign in|session/i.test(error.message)){$('authGate').classList.remove('hidden')}}
+  finally{busy=false;send.disabled=false;input.focus()}
  });
- loadModule();
+ loadModule();checkSession();
 })();
 </script>
-</body>
-</html>
+</body></html>
