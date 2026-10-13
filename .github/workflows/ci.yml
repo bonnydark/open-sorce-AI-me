@@ -1,0 +1,45 @@
+name: Validate Open Source AI Me
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Worker source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find src -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
+
+      - name: Check required project files
+        run: |
+          test -f wrangler.toml
+          test -f src/index.js
+          test -f web/index.html
+          grep -q 'binding = "AI"' wrangler.toml
+          grep -q 'binding = "DB"' wrangler.toml
