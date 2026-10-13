@@ -1,6 +1,6 @@
 {
   "name": "Open Source AI Engine",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "entry": "modul/ai-engine.js",
-  "description": "Dedicated AI adapter with authenticated, account-specific server-side conversation history"
+  "description": "Modular AI adapter with account-backed chat history, URL-addressable conversations, and per-user module preferences"
 }
