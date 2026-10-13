@@ -7,6 +7,7 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - Passwords are salted and hashed with PBKDF2 on the Worker.
 - HttpOnly, Secure, SameSite session cookie with server-side session records.
 - Per-account chat history stored in Cloudflare D1.
+- Safe OSINT workspace for passive public-source research on public domains and public IPs: RDAP, certificate transparency, DNS, urlscan.io, VirusTotal, indexed pages, public code references, and archived snapshots. It opens external source pages; it does not run scans or automatically validate findings.
 - Conversation links use `/{username}/c-{opaque-conversation-id}` without putting chat titles in the URL; the backend still checks account ownership.
 - Personalized welcome screen and shareable/deep-linkable conversation paths.
 - Per-account preferences: theme, response style, typewriter effect/speed, and code panels.
