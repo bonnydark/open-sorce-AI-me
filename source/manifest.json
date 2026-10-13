@@ -1,6 +1,6 @@
 {
-  "name": "Open Source AI Me",
-  "version": "0.1.0",
+  "name": "Open Source AI",
+  "version": "0.2.0",
   "entry": "modul/assistant.js",
-  "description": "Browser-based starter assistant module"
+  "description": "Provider-agnostic AI backend adapter for Cloudflare Worker"
 }
