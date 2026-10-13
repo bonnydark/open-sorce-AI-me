@@ -1,0 +1,12 @@
+name = "open-sorce-ai-me"
+main = "src/index.js"
+compatibility_date = "2026-10-13"
+workers_dev = true
+
+[assets]
+directory = "./web"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[ai]
+binding = "AI"
