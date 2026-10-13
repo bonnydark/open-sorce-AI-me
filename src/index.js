@@ -77,7 +77,7 @@ export default {
                   }
                   await appendMessage(env.DB, user.id, conversationId, "user", message);
                   try {
-                    const context = await recentContext(env.DB, user.id, conversationId, 24);
+                    const context = await recentContext(env.DB, user.id, conversationId, 40);
                     const settings = await getUserSettings(env.DB, user.id);
                     let webContext = [];
                     const lowerMessage = message.toLowerCase();
