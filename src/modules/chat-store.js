@@ -55,4 +55,5 @@ export async function handleChats(request, env, url, user) {
   }
   return json({ error: "Not found." }, 404);
 }
+// Other functions are exported at their declarations above; only this helper needs a separate export.
 export { ownsConversation };
