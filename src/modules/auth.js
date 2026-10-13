@@ -28,6 +28,31 @@ function cookieValue(request, name) {
 function sessionCookie(token, maxAge = SESSION_SECONDS) {
   return `${SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
 }
+let authSchemaReady = null;
+async function ensureAuthSchema(db) {
+  if (!authSchemaReady) {
+    authSchemaReady = (async () => {
+      await db.prepare(`CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY NOT NULL,
+        email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+        display_name TEXT NOT NULL DEFAULT '',
+        password_salt TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+      )`).run();
+      await db.prepare(`CREATE TABLE IF NOT EXISTS sessions (
+        token_hash TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`).run();
+      await db.prepare("CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id)").run();
+      await db.prepare("CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions(expires_at)").run();
+    })().catch(error => { authSchemaReady = null; throw error; });
+  }
+  return authSchemaReady;
+}
 async function createSession(db, userId) {
   const token = randomHex(32);
   const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
@@ -40,6 +65,7 @@ export function publicUser(row) {
 }
 export async function getSessionUser(request, env) {
   if (!env.DB) throw new Error("D1 database binding DB is missing.");
+  await ensureAuthSchema(env.DB);
   const token = cookieValue(request, SESSION_COOKIE);
   if (!token) return null;
   const tokenHash = await digest(token);
@@ -55,6 +81,7 @@ export async function getSessionUser(request, env) {
 }
 export async function handleAuth(request, env, url) {
   if (!env.DB) return json({ error: "Database is not configured yet. Bind a Cloudflare D1 database as DB and apply migrations." }, 503);
+  await ensureAuthSchema(env.DB);
   const path = url.pathname;
   if (path === "/api/auth/me" && request.method === "GET") {
     const user = await getSessionUser(request, env);
