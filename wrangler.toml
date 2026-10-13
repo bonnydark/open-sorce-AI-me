@@ -15,5 +15,5 @@ binding = "AI"
 [[d1_databases]]
 binding = "DB"
 database_name = "open-sorce-ai-me-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "db246638-4bd8-4e26-85ce-52fe450c4404"
 migrations_dir = "migrations"
