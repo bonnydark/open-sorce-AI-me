@@ -3,10 +3,10 @@
  * Authentication and durable chat memory live in the Worker/D1 backend.
  * This module only calls the same-origin API; it contains no model secrets.
  */
-export const name = "Open Source AI Engine";
-export const version = "0.4.0";
+export const name = "OpenAI Module · Cloudflare Workers AI";
+export const version = "0.5.0";
 export const mode = "api";
-export const capabilities = ["chat", "account-history", "code-help", "streaming-ui"];
+export const capabilities = ["chat", "account-history", "code-help", "read-only-public-web-fetch", "file-upload", "file-download", "read-only-sharing", "saved-memories"];
 export let currentConversationId = null;
 
 export function setConversation(id) {
