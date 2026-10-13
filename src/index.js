@@ -76,7 +76,7 @@ export default {
                     const settings = await getUserSettings(env.DB, user.id);
                     let webContext = [];
                     const lowerMessage = message.toLowerCase();
-                    const urlCandidate = message.split(/\\s+/).find(part => part.startsWith("https://") || part.startsWith("http://"));
+                    const urlCandidate = message.split(/\s+/).find(part => part.startsWith("https://") || part.startsWith("http://"));
                     const toolRequested = lowerMessage.includes("/fetch ") || lowerMessage.startsWith("curl ") || lowerMessage.includes(" curl ") || lowerMessage.startsWith("fetch ") || lowerMessage.includes(" fetch ") || lowerMessage.startsWith("read website ") || lowerMessage.startsWith("read the website ") || lowerMessage.startsWith("read url ") || lowerMessage.startsWith("read raw ");
                     const toolMatch = toolRequested && urlCandidate ? [urlCandidate, urlCandidate] : null;
                     if (toolMatch) {
