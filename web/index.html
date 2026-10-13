@@ -43,7 +43,51 @@ button,input{font:inherit}button{cursor:pointer}.shell{display:grid;grid-templat
  const rawBase='https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/'+BRANCH+'/';
  const messages=document.getElementById('messages'), form=document.getElementById('chatForm'), input=document.getElementById('prompt'), send=document.getElementById('sendBtn');
  let activeModule=null;
- function addMessage(who,body,kind=''){const el=document.createElement('div');el.className='msg '+kind;const label=document.createElement('div');label.className='who';label.textContent=who;const text=document.createElement('div');text.className='msg-body';text.textContent=body;el.append(label,text);messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return text;}\n function addTypingAnswer(who,body){\n  const host=addMessage(who,'');host.textContent='';\n  const raw=String(body??'');const parts=[];const re=/```([a-zA-Z0-9_+#.-]*)\\n([\\s\\S]*?)```/g;let last=0,match;\n  while((match=re.exec(raw))){if(match.index>last)parts.push({type:'text',value:raw.slice(last,match.index)});parts.push({type:'code',lang:match[1]||'code',value:match[2]});last=re.lastIndex;}\n  if(last<raw.length)parts.push({type:'text',value:raw.slice(last)});if(!parts.length)parts.push({type:'text',value:raw});\n  let p=0;const typeNext=()=>{if(p>=parts.length)return;const part=parts[p++];let target;if(part.type==='code'){const wrap=document.createElement('section');wrap.className='codewrap';const head=document.createElement('div');head.className='codehead';const lang=document.createElement('span');lang.textContent=part.lang;const copy=document.createElement('button');copy.type='button';copy.textContent='Copy code';copy.addEventListener('click',()=>{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(part.value).then(()=>copy.textContent='Copied!').catch(()=>{copy.textContent='Copy failed';});}});head.append(lang,copy);const pre=document.createElement('pre');const code=document.createElement('code');code.textContent='';pre.append(code);wrap.append(head,pre);host.append(wrap);target=code;}else{target=document.createElement('span');target.textContent='';host.append(target);}\n   let i=0;const tick=()=>{const next=Math.min(i+2,part.value.length);target.textContent+=part.value.slice(i,next);i=next;messages.scrollTop=messages.scrollHeight;if(i<part.value.length){setTimeout(tick,18);}else{typeNext();}};tick();\n  };typeNext();\n }
+ function addMessage(who,body,kind=''){
+  const el=document.createElement('div');el.className='msg '+kind;
+  const label=document.createElement('div');label.className='who';label.textContent=who;
+  const text=document.createElement('div');text.className='msg-body';text.textContent=body;
+  el.append(label,text);messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return text;
+ }
+ function addTypingAnswer(who,body){
+  const host=addMessage(who,'');host.textContent='';
+  const raw=String(body??'');const parts=[];
+  const re=/```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/g;
+  let last=0,match;
+  while((match=re.exec(raw))){
+   if(match.index>last)parts.push({type:'text',value:raw.slice(last,match.index)});
+   parts.push({type:'code',lang:match[1]||'code',value:match[2]});last=re.lastIndex;
+  }
+  if(last<raw.length)parts.push({type:'text',value:raw.slice(last)});
+  if(!parts.length)parts.push({type:'text',value:raw});
+  let p=0;
+  const typeNext=()=>{
+   if(p>=parts.length)return;
+   const part=parts[p++];let target;
+   if(part.type==='code'){
+    const wrap=document.createElement('section');wrap.className='codewrap';
+    const head=document.createElement('div');head.className='codehead';
+    const lang=document.createElement('span');lang.textContent=part.lang;
+    const copy=document.createElement('button');copy.type='button';copy.textContent='Copy code';
+    copy.addEventListener('click',()=>{
+     if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(part.value).then(()=>copy.textContent='Copied!').catch(()=>copy.textContent='Copy failed');
+     }
+    });
+    head.append(lang,copy);const pre=document.createElement('pre');
+    const code=document.createElement('code');code.textContent='';pre.append(code);
+    wrap.append(head,pre);host.append(wrap);target=code;
+   }else{target=document.createElement('span');target.textContent='';host.append(target);}
+   let i=0;
+   const tick=()=>{
+    const next=Math.min(i+2,part.value.length);target.textContent+=part.value.slice(i,next);i=next;
+    messages.scrollTop=messages.scrollHeight;
+    if(i<part.value.length)setTimeout(tick,18);else typeNext();
+   };
+   tick();
+  };
+  typeNext();
+ }
  async function loadModule(){
    try{
     const loaderUrl='https://cdn.jsdelivr.net/gh/'+OWNER+'/'+REPO+'@'+BRANCH+'/source/loader.js';
