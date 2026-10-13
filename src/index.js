@@ -75,17 +75,17 @@ export default {
                     const context = await recentContext(env.DB, user.id, conversationId, 12);
                     const settings = await getUserSettings(env.DB, user.id);
                     let webContext = [];
-                    const toolMatch = message.match(/(?:^|\\s)(?:\\/fetch|curl|fetch|read\\s+(?:the\\s+)?(?:website|url|raw))\\s+(https?:\\/\\/[^\\s"'<>]+)/i);
+                    const toolMatch = message.match(/(?:^|\s)(?:\/fetch|curl|fetch|read\s+(?:the\s+)?(?:website|url|raw))\s+(https?:\/\/[^\s<>]+)/i);
                     if (toolMatch) {
                       try {
                         const page = await fetchPublicText(toolMatch[1]);
-                        webContext = [{ role: "system", content: "User explicitly requested a read-only fetch of a public web page. URL: " + page.url + "\\nHTTP status: " + page.status + "\\nContent type: " + page.contentType + "\\nPage text (possibly truncated):\\n" + page.text }];
+                        webContext = [{ role: "system", content: "User explicitly requested a read-only fetch of a public web page. URL: " + page.url + "\nHTTP status: " + page.status + "\nContent type: " + page.contentType + "\nPage text (possibly truncated):\n" + page.text }];
                       } catch (fetchError) {
                         webContext = [{ role: "system", content: "The requested public website fetch failed safely: " + String(fetchError?.message || fetchError) }];
                       }
                     }
                     if (settings.autoMemories) {
-                      const candidate = message.match(/(?:\\bremember that\\s+|\\bI prefer\\s+|\\bI like\\s+|\\bmy name is\\s+|\\bI am working on\\s+|\\bI'm working on\\s+|\\bI always use\\s+|\\bplease remember\\s+)([^\\n.!?]{3,180})/i);
+                      const candidate = message.match(/(?:\bremember that\s+|\bI prefer\s+|\bI like\s+|\bmy name is\s+|\bI am working on\s+|\bI'm working on\s+|\bI always use\s+|\bplease remember\s+|hãy nhớ rằng\s+|ghi nhớ\s+|tôi thích\s+|mình thích\s+|tui thích\s+|tôi đang làm\s+|mình đang làm\s+|tên tôi là\s+)([^\n.!?]{3,180})/i);
                       if (candidate) {
                         const memory = candidate[1].trim();
                         try {
