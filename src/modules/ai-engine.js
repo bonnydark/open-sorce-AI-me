@@ -44,15 +44,23 @@ const stylePrompts = {
   detailed: "Give a thorough, well-structured answer with context, examples, and step-by-step explanations when useful."
 };
 
+const profilePrompts = {
+  general: "General workspace: be a helpful, accurate multilingual assistant.",
+  "bug-bounty": "Bug bounty / security researcher workspace: prioritize authorized, in-scope security testing, threat modeling, reproducible findings, impact analysis, and clear responsible-disclosure reports. Ask for scope and authorization when unclear. Prefer passive recon and defensive verification. Do not assist with credential theft, persistence, stealth, destructive actions, exfiltration, or attacks against systems without authorization.",
+  developer: "Developer workspace: act as a practical software engineering copilot. Focus on debugging, architecture, code review, tests, maintainability, accessibility, and secure defaults. Provide actionable steps and runnable examples when useful; distinguish tested code from untested suggestions.",
+  student: "Student workspace: teach step by step, explain concepts in plain language, use examples and small exercises, check understanding, and help the learner build their own solution rather than only giving unexplained answers."
+};
+
 export async function generateReply(aiBinding, conversation, settings = {}) {
   if (!aiBinding) throw new Error("Cloudflare Workers AI binding AI is missing.");
   const style = stylePrompts[settings.answerStyle] || stylePrompts.balanced;
+  const profile = settings.specialistMode === true ? (profilePrompts[settings.workspaceProfile] || profilePrompts.general) : profilePrompts.general;
   const messages = Array.isArray(conversation)
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string")
     : [];
   const result = await aiBinding.run(MODEL, {
     messages: [
-      { role: "system", content: SYSTEM_PROMPT + "\n\nUser response preference: " + style },
+      { role: "system", content: SYSTEM_PROMPT + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile },
       ...messages
     ],
     max_tokens: 2800
