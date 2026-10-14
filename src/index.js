@@ -7,6 +7,7 @@ import { handleShareOwner, getSharedChat } from "./modules/shares.js";
 import { handleFiles } from "./modules/files.js";
 import { fetchPublicText } from "./modules/web-fetch.js";
 import { handleOsint } from "./modules/osint.js";
+import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -44,7 +45,9 @@ export default {
         else {
           const user = await getSessionUser(request, env);
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
-          else if (url.pathname === "/api/osint") {
+          else if (url.pathname.startsWith("/api/integrations/github/")) {
+            response = await handleGitHubWorkspace(request, env, user, url);
+          } else if (url.pathname === "/api/osint") {
             response = await handleOsint(request);
           } else if (url.pathname === "/api/settings") {
             response = await handleUserSettings(request, env, user);
