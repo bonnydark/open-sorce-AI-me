@@ -25,6 +25,84 @@ body[data-theme="light"] .msg,body[data-theme="light"] .composer,body[data-theme
 
 /* Safe OSINT research workspace */
 .osintgate{position:fixed;inset:0;z-index:25;display:grid;place-items:center;padding:18px;background:#050505e8;backdrop-filter:blur(14px)}.osintcard{width:min(760px,100%);max-height:92vh;overflow:auto;background:#100d0d;border:1px solid #522126;border-radius:20px;padding:22px;box-shadow:0 25px 100px #000b}.osintform{display:flex;gap:8px;margin:16px 0}.osintform input{flex:1;min-width:0;background:#080808;color:var(--text);border:1px solid #452328;border-radius:9px;padding:12px;font:inherit}.osintform button{border:0;border-radius:9px;padding:10px 14px;background:linear-gradient(135deg,#ff2638,#ff5b35);color:white;font-weight:800}.osintnotice{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:11px;margin:12px 0}.osintresults{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.osintlink{display:block;border:1px solid var(--line);border-radius:11px;padding:12px;background:#171111;color:var(--text);text-decoration:none}.osintlink:hover{border-color:var(--accent);background:#211315}.osintlink strong{display:block;font-size:13px}.osintlink small{display:block;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}.osintstatus{font-size:12px;color:var(--muted);min-height:20px;margin-top:10px}.osintfindings{display:grid;gap:9px;margin-top:12px}.supportgate{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:18px;background:#050505e8;backdrop-filter:blur(14px)}.supportcard{width:min(650px,100%);max-height:92vh;overflow:auto;background:#100d0d;border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 25px 100px #000b}.supportcard input,.supportcard textarea,.supportcard select{width:100%;background:#080808;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit;margin-top:5px}.supportfield{margin:12px 0}.supportfield label{font-size:13px;font-weight:700}.supportactions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}.supportactions button{border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:#211314;color:var(--text)}.supportactions .primary{background:linear-gradient(135deg,#ff2638,#ff5b35);border:0;color:white}.profilehint{font-size:12px;color:var(--muted);margin:7px 0 0}.osintfinding{border:1px solid var(--line);border-radius:10px;padding:12px;background:#0c0a0a}.osintfinding pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;margin:8px 0 0;font:12px/1.5 ui-monospace,monospace;color:#d9d0d0}@media(max-width:600px){.osintresults{grid-template-columns:1fr}.osintform{flex-direction:column}.osintcard{padding:16px}}
+
+/* Mobile-first interaction pass: compact navigation, full-height chat, safe-area controls */
+.mobileMenuBtn{display:none;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:10px;background:#160b0c;color:var(--text);padding:9px 12px;font-weight:750;min-height:42px}
+button,.toolbtn,.settingsbtn,.newchat,.logout,.suggestions button{touch-action:manipulation}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html{scrollbar-gutter:stable}
+@media(max-width:760px){
+ body{min-height:100%;overflow:hidden}
+ .shell{display:flex;flex-direction:column;width:100%;height:100dvh;min-height:0;overflow:hidden}
+ .side{display:none}
+ body.mobile-nav-open::after{content:"";position:fixed;inset:0;background:#000b;z-index:39;backdrop-filter:blur(3px)}
+ body.mobile-nav-open .side{display:flex;position:fixed;z-index:40;inset:0 auto 0 0;width:min(88vw,340px);height:100dvh;max-height:none;overflow-y:auto;overscroll-behavior:contain;border-right:1px solid var(--line);border-bottom:0;padding: max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));box-shadow:20px 0 70px #0009}
+ body.mobile-nav-open .history{display:flex;flex-direction:column;max-height:30dvh;overflow:auto}
+ .side .newchat,.side .settingsbtn{min-height:44px}
+ .sidebottom{margin-top:auto;padding-top:12px}
+ .main{display:flex;flex-direction:column;flex:1;min-height:0;height:100dvh;overflow:hidden;padding:max(7px,env(safe-area-inset-top)) 9px max(5px,env(safe-area-inset-bottom));gap:8px}
+ .top{flex:0 0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:2px 1px}
+ .top h1{font-size:clamp(19px,5vw,25px);margin:2px 0;overflow-wrap:anywhere}
+ .top .sub{font-size:11px;line-height:1.35}
+ .eyebrow{font-size:9px;letter-spacing:.1em}
+ .mobileMenuBtn{display:inline-flex;grid-column:2;grid-row:1;align-self:center}
+ #buildStatus{grid-column:2;grid-row:2;font-size:10px;padding:4px 8px;justify-self:end}
+ .chatbox{display:flex;flex:1 1 auto;height:auto;min-height:0;max-height:none;border-radius:14px}
+ .chathead{flex:0 0 auto;padding:10px 11px;align-items:flex-start;gap:8px}
+ .chathead h2{font-size:13px}
+ .chathead p{font-size:11px;overflow-wrap:anywhere}
+ .chathead-tools{justify-content:flex-end;max-width:55%;gap:5px}
+ .toolbtn{font-size:11px;min-height:36px;padding:6px 8px;white-space:nowrap}
+ #moduleStatus{font-size:9px;padding:5px 7px}
+ .messages{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;padding:12px 10px;gap:11px}
+ .msg{max-width:100%;padding:10px 11px;font-size:14px}
+ .welcome{min-height:100%;padding:18px 6px;gap:12px}
+ .welcome h2{font-size:clamp(24px,7vw,34px)}
+ .welcome p{font-size:13px}
+ .suggestions{width:100%;gap:7px}
+ .suggestions button{max-width:100%;min-height:40px;white-space:normal}
+ .composer{flex:0 0 auto;position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:end;gap:5px;padding:8px 7px max(8px,env(safe-area-inset-bottom));}
+ .composer .toolbtn{min-height:42px;padding:7px;font-size:10px}
+ .composer textarea{width:100%;min-width:0;min-height:42px;max-height:27dvh;padding:10px;font-size:16px;line-height:1.4;border-radius:12px}
+ .send{min-height:42px;min-width:44px;padding:0 12px;border-radius:10px}
+ #attachmentStatus{flex:0 0 auto;max-height:52px;overflow:auto;font-size:11px}
+ .codewrap{max-width:100%}
+ .codewrap pre{max-width:100%;overflow:auto;overscroll-behavior-x:contain;padding:10px;font-size:12px}
+ .settingsgate,.osintgate,.supportgate{padding:max(6px,env(safe-area-inset-top)) 7px max(6px,env(safe-area-inset-bottom));align-items:end}
+ .settingscard,.osintcard,.supportcard{width:100%;max-height:94dvh;overflow:auto;border-radius:18px 18px 10px 10px;padding:16px;overscroll-behavior:contain}
+ .settingrow{gap:9px;padding:12px 0}
+ .settingrow select,.settingrow input[type=range]{max-width:48%;width:48%;min-width:0}
+ .settingsactions{position:sticky;bottom:0;background:#100d0d;padding:12px 0 2px}
+ .supportactions button{min-height:42px}
+ .osintform button{min-height:42px}
+ .share-view .main{height:100dvh;padding:0}
+ .share-view .chatbox{height:100dvh;min-height:0;border-radius:0}
+ .share-view .chathead{padding:max(12px,env(safe-area-inset-top)) 12px 10px}
+}
+@media(max-width:390px){
+ .main{padding-left:6px;padding-right:6px}
+ .top{grid-template-columns:minmax(0,1fr) auto}
+ .top .sub{max-width:230px}
+ .chathead-tools{max-width:48%}
+ #exportChat{display:none}
+ .composer{grid-template-columns:auto auto minmax(0,1fr) auto;gap:4px;padding-left:5px;padding-right:5px}
+ .composer .toolbtn{font-size:0;min-width:38px}
+ #voiceToggle::first-letter,#attachFile::first-letter{font-size:16px}
+ .composer textarea{font-size:16px}
+ .send{padding:0 9px}
+}
+@media(orientation:landscape) and (max-height:500px) and (max-width:900px){
+ .top{display:none}
+ .main{padding-top:max(4px,env(safe-area-inset-top))}
+ .chatbox{border-radius:10px}
+ .chathead{padding:6px 10px}
+ .messages{padding:8px}
+ .composer{padding:5px}
+ .composer textarea{max-height:22dvh;min-height:38px}
+ .settingscard,.osintcard,.supportcard{max-height:96dvh}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
 </style>
 </head>
 <body>
@@ -35,7 +113,7 @@ body[data-theme="light"] .msg,body[data-theme="light"] .composer,body[data-theme
  <div class="sidebottom"><div class="account"><div class="avatar" id="avatar">?</div><div class="accountinfo"><strong id="accountName">Not signed in</strong><small id="accountEmail">Private account history</small></div><button class="logout" id="logout">Sign out</button></div></div>
 </aside>
 <main class="main">
- <header class="top"><div><div class="eyebrow">Your personal AI workspace</div><h1 id="pageTitle">Open Source AI Me</h1><p class="sub" id="pageSubtitle">Your chats, modules, and preferences in one place.</p></div><span class="pill" id="buildStatus">CHECKING</span></header>
+ <header class="top"><button class="mobileMenuBtn" id="mobileMenu" type="button" aria-label="Open navigation menu" aria-expanded="false">☰ Menu</button><div><div class="eyebrow">Your personal AI workspace</div><h1 id="pageTitle">Open Source AI Me</h1><p class="sub" id="pageSubtitle">Your chats, modules, and preferences in one place.</p></div><span class="pill" id="buildStatus">CHECKING</span></header>
  <section class="grid"><div class="metric"><small>Runtime</small><strong>Cloudflare Worker</strong><div class="tiny">Private API · same-origin</div></div><div class="metric"><small>AI engine</small><strong id="modelState">Modular</strong><div class="tiny">Provider adapter separated</div></div><div class="metric"><small>Chat storage</small><strong id="storageState">Checking</strong><div class="tiny">Account-scoped D1 history</div></div></section>
  <section class="chatbox"><div class="chathead"><div><h2>OpenAI Module</h2><p id="chatSubtitle">Sign in to start a private conversation.</p><p class="share-banner">Shared conversation · Read-only · AI replies disabled</p></div><div class="chathead-tools"><button class="toolbtn" id="exportChat" type="button" title="Export this conversation as Markdown">↓ Export</button><button class="toolbtn" id="shareChat" type="button" title="Create a read-only share link">↗ Share</button><button class="toolbtn" id="revokeShare" type="button" title="Revoke existing share links">Revoke</button><span class="pill" id="moduleStatus">MODULE</span></div></div><div class="messages" id="messages" aria-live="polite"><div class="welcome" id="welcome"><div class="welcomeicon">AI</div><h2 id="welcomeTitle">What are you thinking about?</h2><p>Your AI workspace is ready when you are.</p><div class="suggestions"><button type="button" data-prompt="Help me build a website">Build a website</button><button type="button" data-prompt="Explain a difficult topic simply">Learn something</button><button type="button" data-prompt="Help me write and debug code">Write code</button></div></div></div><div id="attachmentStatus" class="status" style="padding:0 15px"></div><form class="composer" id="chatForm"><input id="filePicker" type="file" class="hidden" accept=".txt,.md,.markdown,.csv,.json,.js,.mjs,.ts,.tsx,.jsx,.html,.css,.xml,.svg,.py,.sh,.sql,.yaml,.yml,.toml,.log,.diff,.patch"><button class="toolbtn" id="voiceToggle" type="button" title="Enable voice conversation">🎙 Voice</button><button class="toolbtn" id="attachFile" type="button" title="Attach a text or code file">＋ File</button><textarea id="prompt" rows="1" autocomplete="off" placeholder="Message the OpenAI-style module… (Shift+Enter for a new line)" aria-label="Message your AI module" disabled></textarea><button class="send" id="sendBtn" type="submit" disabled>Send ↗</button></form></section>
  <div class="bottom">Open Source AI Me · Passwords are hashed on the server. Never put private API keys in browser code.</div>
@@ -157,6 +235,12 @@ body[data-theme="light"] .msg,body[data-theme="light"] .composer,body[data-theme
  }catch(error){$('history').textContent=error.message;$('storageState').textContent='Backend error';}}
  async function openChat(id,navigate=true){try{const data=await api('/api/chats/'+id);activeChatId=id;activeChatTitle=data.chat.title||'New chat';if(activeModule?.setConversation)activeModule.setConversation(id);messages.replaceChildren();if(!data.chat.messages.length)showEmpty('Send a message to begin this chat.');else for(const item of data.chat.messages)addMessage(item.role==='user'?'YOU':'AI MODULE',item.content,item.role==='user'?'user':'');$('chatSubtitle').textContent=activeChatTitle;if(navigate)navigateToChat(id,activeChatTitle);else navigateToChat(id,activeChatTitle,true);await loadChatButtonsOnly()}catch(error){addMessage('SYSTEM',error.message)}}
  async function loadChatButtonsOnly(){try{const data=await api('/api/chats');const history=$('history');history.replaceChildren();renderChatList(data.chats,history)}catch{}}
+ const mobileMenu=$('mobileMenu');
+ function closeMobileNav(){document.body.classList.remove('mobile-nav-open');mobileMenu?.setAttribute('aria-expanded','false');mobileMenu?.setAttribute('aria-label','Open navigation menu');if(mobileMenu)mobileMenu.textContent='☰ Menu'}
+ mobileMenu?.addEventListener('click',()=>{const open=document.body.classList.toggle('mobile-nav-open');mobileMenu.setAttribute('aria-expanded',String(open));mobileMenu.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');mobileMenu.textContent=open?'✕ Close':'☰ Menu'});
+ $('side').addEventListener('click',event=>{if(event.target.closest('.newchat,.settingsbtn,.chatlink,.logout'))closeMobileNav()});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMobileNav()});
+ window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMobileNav()});
  $('newChat').addEventListener('click',async()=>{if(!currentUser)return;try{const data=await api('/api/chats',{method:'POST',body:JSON.stringify({title:'New chat'})});const chat=data.chat;if(!chat?.id)throw new Error('Could not create a conversation.');activeChatId=chat.id;activeChatTitle=chat.title||'New chat';if(activeModule?.setConversation)activeModule.setConversation(chat.id);showEmpty('Send a message to begin this chat.');$('chatSubtitle').textContent=activeChatTitle;navigateToChat(chat.id,activeChatTitle);await loadChatButtonsOnly();input.focus()}catch(error){addMessage('SYSTEM',error.message)}});
  $('logout').addEventListener('click',async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'})}catch{}currentUser=null;activeChatId=null;activeChatTitle='';input.disabled=true;send.disabled=true;$('authGate').classList.remove('hidden');$('buildStatus').textContent='SIGNED OUT';showEmpty('Sign in or create an account to begin.');setAuthMode('login')});
  form.addEventListener('submit',async event=>{event.preventDefault();if(busy)return;const prompt=input.value.trim();if(!prompt)return;busy=true;addMessage('YOU',prompt,'user');input.value='';resizePrompt();send.disabled=true;
