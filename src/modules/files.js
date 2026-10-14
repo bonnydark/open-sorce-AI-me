@@ -11,9 +11,19 @@ export async function handleFiles(request, env, user, url) {
     let body; try { body = await request.json(); } catch { return json({ error: "Expected JSON." }, 400); }
     const filename = safeName(body?.filename);
     const content = typeof body?.content === "string" ? body.content : "";
-    if (!allowedExt.test(filename)) return json({ error: "Only text/code file types are supported (txt, md, csv, json, js, html, css, py, sql, and similar)." }, 415);
-    if (content.length > 500000) return json({ error: "File is too large. Maximum is 500 KB of text." }, 413);
-    const contentType = "text/plain; charset=utf-8";
+    const isImage = body?.isImage === true;
+    let contentType = "text/plain; charset=utf-8";
+    if (isImage) {
+      const mimeType = String(body?.mimeType || "").toLowerCase();
+      const imageName = [".png",".jpg",".jpeg",".gif",".webp",".bmp",".avif"].some(ext => filename.toLowerCase().endsWith(ext));
+      if (!imageName || !["image/png","image/jpeg","image/gif","image/webp","image/bmp","image/avif"].includes(mimeType)) return json({ error: "Unsupported image type." }, 415);
+      if (!content.startsWith("data:" + mimeType + ";base64,")) return json({ error: "Image data is invalid." }, 400);
+      if (content.length > 700000) return json({ error: "Image is too large. Maximum is 500 KB per image." }, 413);
+      contentType = mimeType;
+    } else {
+      if (!allowedExt.test(filename)) return json({ error: "Only image or text/code file types are supported." }, 415);
+      if (content.length > 500000) return json({ error: "File is too large. Maximum is 500 KB of text." }, 413);
+    }
     const id = crypto.randomUUID();
     await env.DB.prepare("INSERT INTO user_files (id,user_id,filename,content_type,content) VALUES (?,?,?,?,?)").bind(id,user.id,filename,contentType,content).run();
     return json({ file: { id, filename, contentType, size: content.length, url: "/api/files/" + id } }, 201);
