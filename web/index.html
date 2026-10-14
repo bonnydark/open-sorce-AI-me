@@ -216,8 +216,8 @@ html{scrollbar-gutter:stable}
   const el=document.createElement('div');el.className='msg '+kind;const label=document.createElement('div');label.className='who';label.textContent=who;
   const text=document.createElement('div');text.className='msg-body';text.textContent=body;el.append(label,text);
   if(kind.includes('user')){
-   const imageNames=String(body||'').split('\n').filter(line=>/\.(png|jpe?g|gif|webp|bmp|avif)(\s|,|$)/i.test(line));
-   if(imageNames.length){const previews=document.createElement('div');previews.className='message-image-previews';for(const nameLine of imageNames){const name=nameLine.replace(/^📎\s*/,'').trim();const pending=pendingAttachments.find(file=>file.isImage&&file.name===name);if(pending?.previewUrl){const img=document.createElement('img');img.src=pending.previewUrl;img.alt='Attached image: '+name;img.title=name;img.loading='lazy';img.addEventListener('click',()=>openImageViewer(pending.previewUrl,name));previews.append(img)}}if(previews.childElementCount)el.append(previews)}
+   const imageFiles=Array.isArray(pendingAttachments)?pendingAttachments.filter(file=>file.isImage&&file.previewUrl):[];
+   if(imageFiles.length){const previews=document.createElement('div');previews.className='message-image-previews';for(const file of imageFiles){const img=document.createElement('img');img.src=file.previewUrl;img.alt='Attached image: '+file.name;img.title=file.name;img.loading='lazy';img.addEventListener('click',()=>openImageViewer(file.previewUrl,file.name));previews.append(img)}el.append(previews)}
   }
   if(!kind.includes('user') && /AI MODULE|OPENAI MODULE|ASSISTANT/i.test(who)){
    const feedback=document.createElement('div');feedback.className='msg-feedback';
