@@ -50,3 +50,9 @@ All chat-history, settings, and AI endpoints require a signed-in session. Conver
 - Configure rate limiting at the edge before opening registration to the public.
 - Chat titles stay in the account history rather than the URL. Conversation IDs are opaque identifiers, not encryption or authorization tokens; access is enforced by the authenticated backend.
 - The application code is open source, but inference currently depends on Cloudflare Workers AI; the repository does not itself contain model weights or a separately trained model.
+
+## Specialist workspace modes
+
+Settings includes an optional Specialist mode toggle with three focused profiles: Bug bounty / security researcher (authorized scope, safe verification, impact analysis and responsible disclosure), Developer support (debugging, code review, tests and secure defaults), and Student support (step-by-step explanations, examples and practice). The selected profile adjusts AI guidance and workspace accent/UI prompts and is stored with the signed-in user's settings.
+
+The Support & report a bug form prepares a report locally and can copy it or open a prefilled GitHub issue draft. It does not submit the issue automatically. Do not put credentials, session cookies, private data, or sensitive undisclosed security details in public issues.
