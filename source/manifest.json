@@ -1,6 +1,6 @@
 {
   "name": "Open Source AI Me Module Registry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entry": "modul/ai-engine.js",
   "description": "Selectable AI modules loaded from this GitHub repository.",
   "modules": [
@@ -27,6 +27,12 @@
       "name": "Study Tutor",
       "entry": "modul/study-tutor.js",
       "description": "Step-by-step learning and explanations."
+    },
+    {
+      "id": "vision-ai",
+      "name": "Vision AI",
+      "entry": "modul/vision-ai.js",
+      "description": "Image understanding for screenshots, diagrams, photos, and visual debugging using Cloudflare-hosted LLaVA."
     }
   ],
   "defaultModule": "ai-engine"
