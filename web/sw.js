@@ -1,4 +1,4 @@
-const CACHE_NAME = "open-source-ai-me-shell-v1";
+const CACHE_NAME = "open-source-ai-me-shell-v2";
 const SHELL = ["/", "/manifest.json", "/icon.svg"];
 
 self.addEventListener("install", event => {
@@ -20,7 +20,9 @@ self.addEventListener("fetch", event => {
 
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).then(response => {
-      if (response.ok) {
+      // Cache only the canonical app shell. Never overwrite "/" with a
+      // username/chat route response, and never cache API/auth responses.
+      if (response.ok && (url.pathname === "/" || url.pathname === "/index.html")) {
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put("/", copy));
       }
