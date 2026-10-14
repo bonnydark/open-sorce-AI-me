@@ -1,4 +1,5 @@
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const VISION_MODEL = "@cf/meta/llama-3.2-11b-vision-instruct";
 
 const SYSTEM_PROMPT = `You are Open Source AI Me, a helpful multilingual assistant inside a private chat workspace.
 
@@ -51,7 +52,7 @@ const profilePrompts = {
   student: "Student workspace: teach step by step, explain concepts in plain language, use examples and small exercises, check understanding, and help the learner build their own solution rather than only giving unexplained answers."
 };
 
-export async function generateReply(aiBinding, conversation, settings = {}) {
+export async function generateReply(aiBinding, conversation, settings = {}, images = []) {
   if (!aiBinding) throw new Error("Cloudflare Workers AI binding AI is missing.");
   const style = stylePrompts[settings.answerStyle] || stylePrompts.balanced;
   const specialistEnabled = settings.specialistMode === true;
@@ -72,11 +73,24 @@ When the user asks which mode/support they are currently using (for example, "wh
   const messages = Array.isArray(conversation)
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string")
     : [];
-  const result = await aiBinding.run(MODEL, {
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile },
-      ...messages
-    ],
+  const systemMessage = { role: "system", content: SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile };
+  const imageData = Array.isArray(images) ? images.filter(image => typeof image === "string" && /^data:image\/(png|jpeg|webp|gif|bmp|avif);base64,/i.test(image)).slice(0, 3) : [];
+  const modelMessages = [...messages];
+  if (imageData.length) {
+    let lastUser = -1;
+    for (let i = modelMessages.length - 1; i >= 0; i--) {
+      if (modelMessages[i]?.role === "user") { lastUser = i; break; }
+    }
+    if (lastUser >= 0) {
+      const text = modelMessages[lastUser].content;
+      modelMessages[lastUser] = { role: "user", content: [
+        { type: "text", text: typeof text === "string" ? text : "Please inspect the attached image(s) and answer the user's request." },
+        ...imageData.map(url => ({ type: "image_url", image_url: { url } }))
+      ] };
+    }
+  }
+  const result = await aiBinding.run(imageData.length ? VISION_MODEL : MODEL, {
+    messages: [systemMessage, ...modelMessages],
     max_tokens: 2800
   });
   const reply = result?.response ?? result?.choices?.[0]?.message?.content;
