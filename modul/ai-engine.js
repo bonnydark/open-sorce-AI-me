@@ -19,7 +19,7 @@ export function clearMemory() {
 export function getMemorySize() {
   return currentConversationId ? 1 : 0;
 }
-export async function respond(prompt, conversationId = currentConversationId) {
+export async function respond(prompt, conversationId = currentConversationId, images = []) {
   const message = String(prompt ?? "").trim();
   if (!message) throw new Error("Enter a message first.");
   if (message.length > 20000) throw new Error("Message is too long (20,000 characters max).");
@@ -27,7 +27,7 @@ export async function respond(prompt, conversationId = currentConversationId) {
     method: "POST",
     headers: { "content-type": "application/json", "accept": "application/json" },
     credentials: "same-origin",
-    body: JSON.stringify({ message, conversationId: conversationId || undefined })
+    body: JSON.stringify({ message, conversationId: conversationId || undefined, images: Array.isArray(images) ? images.slice(0, 3) : [] })
   });
   let data;
   try { data = await response.json(); }
