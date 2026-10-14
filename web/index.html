@@ -140,6 +140,12 @@ html{scrollbar-gutter:stable}
  <button class="railbtn" id="railOsint" type="button" title="OSINT workspace" aria-label="OSINT workspace">⌕<span>OSINT</span></button>
  <button class="railbtn" id="railSupport" type="button" title="Support and bug report" aria-label="Support and bug report">♡<span>Support</span></button>
 </nav>
+<!-- Hidden compatibility triggers retained for existing module event handlers. -->
+<div hidden aria-hidden="true">
+ <button type="button" id="openSettings"></button>
+ <button type="button" id="openOsint"></button>
+ <button type="button" id="openSupport"></button>
+</div>
 <aside class="side" id="side">
  <div class="historyhead"><div class="brand"><div class="logo">AI</div><span>Conversations</span></div><div class="tag">YOUR CHAT HISTORY</div></div>
  <button class="newchat" id="newChat">＋ &nbsp; New chat</button><div class="navlabel">Recent conversations</div><input class="chatsearch" id="chatSearch" type="search" placeholder="Search conversations…" aria-label="Search conversations"><div class="history" id="history"><div class="status">Sign in to load your chats.</div></div>
