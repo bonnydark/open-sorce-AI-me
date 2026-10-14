@@ -238,12 +238,14 @@ html{scrollbar-gutter:stable}
  async function openChat(id,navigate=true){try{const data=await api('/api/chats/'+id);activeChatId=id;activeChatTitle=data.chat.title||'New chat';if(activeModule?.setConversation)activeModule.setConversation(id);messages.replaceChildren();if(!data.chat.messages.length)showEmpty('Send a message to begin this chat.');else for(const item of data.chat.messages)addMessage(item.role==='user'?'YOU':'AI MODULE',item.content,item.role==='user'?'user':'');$('chatSubtitle').textContent=activeChatTitle;if(navigate)navigateToChat(id,activeChatTitle);else navigateToChat(id,activeChatTitle,true);await loadChatButtonsOnly()}catch(error){addMessage('SYSTEM',error.message)}}
  async function loadChatButtonsOnly(){try{const data=await api('/api/chats');const history=$('history');history.replaceChildren();renderChatList(data.chats,history)}catch{}}
  const mobileMenu=$('mobileMenu'),mobileNavBackdrop=$('mobileNavBackdrop');
+ // Move the overlay outside .shell: mobile overflow:hidden can clip fixed overlays.
+ if(mobileNavBackdrop&&mobileNavBackdrop.parentElement!==document.body)document.body.appendChild(mobileNavBackdrop);
  function closeMobileNav(){document.body.classList.remove('mobile-nav-open');mobileMenu?.setAttribute('aria-expanded','false');mobileMenu?.setAttribute('aria-label','Open navigation menu');if(mobileMenu)mobileMenu.textContent='☰ Menu'}
- mobileNavBackdrop?.addEventListener('click',event=>{event.preventDefault();closeMobileNav()});
- mobileNavBackdrop?.addEventListener('pointerdown',()=>closeMobileNav());
- mobileMenu?.addEventListener('click',event=>{event.stopPropagation();const open=!document.body.classList.contains('mobile-nav-open');document.body.classList.toggle('mobile-nav-open',open);mobileMenu.setAttribute('aria-expanded',String(open));mobileMenu.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');mobileMenu.textContent=open?'✕ Close':'☰ Menu'});
- // The dimmed backdrop is a pseudo-element, so listen for taps outside the sidebar.
- document.addEventListener('pointerdown',event=>{if(!document.body.classList.contains('mobile-nav-open'))return;const side=$('side');if(side?.contains(event.target)||mobileMenu?.contains(event.target)||mobileNavBackdrop?.contains(event.target))return;closeMobileNav()},{capture:true});
+ function openMobileNav(){document.body.classList.add('mobile-nav-open');mobileMenu?.setAttribute('aria-expanded','true');mobileMenu?.setAttribute('aria-label','Close navigation menu');if(mobileMenu)mobileMenu.textContent='✕ Close'}
+ mobileNavBackdrop?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();closeMobileNav()});
+ mobileNavBackdrop?.addEventListener('pointerdown',event=>{event.preventDefault();closeMobileNav()});
+ mobileMenu?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(document.body.classList.contains('mobile-nav-open'))closeMobileNav();else openMobileNav()});
+ document.addEventListener('pointerdown',event=>{if(!document.body.classList.contains('mobile-nav-open'))return;const side=$('side');if(side?.contains(event.target)||mobileMenu?.contains(event.target))return;closeMobileNav()},{capture:true});
  $('side').addEventListener('click',event=>{if(event.target.closest('.newchat,.settingsbtn,.chatlink,.logout'))closeMobileNav()});
  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMobileNav()});
  window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMobileNav()});
