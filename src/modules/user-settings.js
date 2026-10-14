@@ -13,7 +13,7 @@ const json = (data, status = 200) => Response.json(data, { status });
 const allowedThemes = new Set(["redline", "midnight", "ocean", "violet", "light"]);
 const allowedStyles = new Set(["concise", "balanced", "detailed"]);
 const allowedProfiles = new Set(["general", "bug-bounty", "developer", "student"]);
-const allowedModules = new Set(["ai-engine", "code-copilot", "security-analyst", "study-tutor"]);
+const allowedModules = new Set(["ai-engine", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
 function cleanSettings(input = {}) {
   return {
     theme: allowedThemes.has(input.theme) ? input.theme : defaults.theme,
