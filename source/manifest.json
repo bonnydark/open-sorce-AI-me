@@ -1,6 +1,33 @@
 {
-  "name": "Open Source AI Engine",
-  "version": "0.5.0",
+  "name": "Open Source AI Me Module Registry",
+  "version": "1.0.0",
   "entry": "modul/ai-engine.js",
-  "description": "Modular AI adapter with account-backed chat history, URL-addressable conversations, and per-user module preferences"
+  "description": "Selectable AI modules loaded from this GitHub repository.",
+  "modules": [
+    {
+      "id": "ai-engine",
+      "name": "General AI",
+      "entry": "modul/ai-engine.js",
+      "description": "General multilingual assistant."
+    },
+    {
+      "id": "code-copilot",
+      "name": "Code Copilot",
+      "entry": "modul/code-copilot.js",
+      "description": "Software development and debugging."
+    },
+    {
+      "id": "security-analyst",
+      "name": "Security Analyst",
+      "entry": "modul/security-analyst.js",
+      "description": "Defensive security, authorized testing and vulnerability analysis."
+    },
+    {
+      "id": "study-tutor",
+      "name": "Study Tutor",
+      "entry": "modul/study-tutor.js",
+      "description": "Step-by-step learning and explanations."
+    }
+  ],
+  "defaultModule": "ai-engine"
 }
