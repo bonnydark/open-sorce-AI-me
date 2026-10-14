@@ -54,13 +54,27 @@ const profilePrompts = {
 export async function generateReply(aiBinding, conversation, settings = {}) {
   if (!aiBinding) throw new Error("Cloudflare Workers AI binding AI is missing.");
   const style = stylePrompts[settings.answerStyle] || stylePrompts.balanced;
-  const profile = settings.specialistMode === true ? (profilePrompts[settings.workspaceProfile] || profilePrompts.general) : profilePrompts.general;
+  const specialistEnabled = settings.specialistMode === true;
+  const profileKey = specialistEnabled && Object.prototype.hasOwnProperty.call(profilePrompts, settings.workspaceProfile)
+    ? settings.workspaceProfile
+    : "general";
+  const profile = profilePrompts[profileKey] || profilePrompts.general;
+  const activeModeLabel = ({
+    general: "General Support (general assistant)",
+    "bug-bounty": "Bug Bounty / Security Researcher",
+    developer: "Developer Support",
+    student: "Student Support"
+  })[profileKey];
+  const activeModeContext = `ACTIVE SUPPORT MODE — IMPORTANT:
+The currently selected mode for this account is: ${activeModeLabel}.
+Specialist mode is ${specialistEnabled ? "ON" : "OFF"}.
+When the user asks which mode/support they are currently using (for example, "what support mode am I in?", "tui dang o che do support gi", or "what mode is active?"), answer directly with the exact active mode above. Do not list every available mode, do not call it "general support" unless that is the actual active mode, and do not guess a different mode. Keep using this mode's role for the rest of the conversation. If the mode settings are unavailable, say you cannot verify the selected mode rather than inventing one.`;
   const messages = Array.isArray(conversation)
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string")
     : [];
   const result = await aiBinding.run(MODEL, {
     messages: [
-      { role: "system", content: SYSTEM_PROMPT + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile },
+      { role: "system", content: SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile },
       ...messages
     ],
     max_tokens: 2800
