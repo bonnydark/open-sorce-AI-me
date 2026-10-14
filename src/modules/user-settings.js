@@ -5,11 +5,14 @@ const defaults = {
   codeBlocks: true,
   answerStyle: "balanced",
   activeModule: "ai-engine",
-  autoMemories: false
+  autoMemories: false,
+  specialistMode: false,
+  workspaceProfile: "general"
 };
 const json = (data, status = 200) => Response.json(data, { status });
 const allowedThemes = new Set(["redline", "midnight", "ocean", "violet", "light"]);
 const allowedStyles = new Set(["concise", "balanced", "detailed"]);
+const allowedProfiles = new Set(["general", "bug-bounty", "developer", "student"]);
 function cleanSettings(input = {}) {
   return {
     theme: allowedThemes.has(input.theme) ? input.theme : defaults.theme,
@@ -18,7 +21,9 @@ function cleanSettings(input = {}) {
     codeBlocks: input.codeBlocks !== false,
     answerStyle: allowedStyles.has(input.answerStyle) ? input.answerStyle : defaults.answerStyle,
     activeModule: "ai-engine",
-    autoMemories: input.autoMemories === true
+    autoMemories: input.autoMemories === true,
+    specialistMode: input.specialistMode === true,
+    workspaceProfile: allowedProfiles.has(input.workspaceProfile) ? input.workspaceProfile : defaults.workspaceProfile
   };
 }
 export async function getUserSettings(db, userId) {
