@@ -84,7 +84,16 @@ export async function handleAuth(request, env, url) {
   await ensureAuthSchema(env.DB);
   const path = url.pathname;
   if (path === "/api/auth/me" && request.method === "GET") {
+    const token = cookieValue(request, SESSION_COOKIE);
     const user = await getSessionUser(request, env);
+    if (user && token) {
+      // Sliding 30-day session: refresh both the D1 expiry and browser cookie
+      // whenever the signed-in client checks its session.
+      const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
+      await env.DB.prepare("UPDATE sessions SET expires_at=? WHERE token_hash=? AND expires_at>?")
+        .bind(expiresAt, await digest(token), Math.floor(Date.now() / 1000)).run();
+      return json({ user }, 200, { "Set-Cookie": sessionCookie(token) });
+    }
     return json({ user });
   }
   if (path === "/api/auth/logout" && request.method === "POST") {
