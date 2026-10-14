@@ -9,14 +9,29 @@ export async function handleFiles(request, env, user, url) {
   }
   if (path === "/api/files" && request.method === "POST") {
     let body; try { body = await request.json(); } catch { return json({ error: "Expected JSON." }, 400); }
-    const filename = safeName(body?.filename);
+    let filename = safeName(body?.filename);
     const content = typeof body?.content === "string" ? body.content : "";
     const isImage = body?.isImage === true;
     let contentType = "text/plain; charset=utf-8";
     if (isImage) {
       const mimeType = String(body?.mimeType || "").toLowerCase();
-      const imageName = [".png",".jpg",".jpeg",".gif",".webp",".bmp",".avif"].some(ext => filename.toLowerCase().endsWith(ext));
-      if (!imageName || !["image/png","image/jpeg","image/gif","image/webp","image/bmp","image/avif"].includes(mimeType)) return json({ error: "Unsupported image type." }, 415);
+      const extensionsByMime = {
+        "image/png": [".png"],
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/gif": [".gif"],
+        "image/webp": [".webp"],
+        "image/bmp": [".bmp"],
+        "image/avif": [".avif"]
+      };
+      const expectedExtensions = extensionsByMime[mimeType];
+      if (!expectedExtensions) return json({ error: "Unsupported image type. Use PNG, JPEG, GIF, WebP, BMP, or AVIF." }, 415);
+      const lowerFilename = filename.toLowerCase();
+      const hasKnownImageExtension = /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(filename);
+      if (hasKnownImageExtension && !expectedExtensions.some(ext => lowerFilename.endsWith(ext))) {
+        return json({ error: "Image filename extension does not match its MIME type." }, 415);
+      }
+      // Some devices provide a valid image MIME type but omit the filename extension.
+      if (!hasKnownImageExtension) filename += expectedExtensions[0];
       if (!content.startsWith("data:" + mimeType + ";base64,")) return json({ error: "Image data is invalid." }, 400);
       if (content.length > 700000) return json({ error: "Image is too large. Maximum is 500 KB per image." }, 413);
       contentType = mimeType;
