@@ -35,7 +35,8 @@ html{scrollbar-gutter:stable}
  body{min-height:100%;overflow:hidden}
  .shell{display:flex;flex-direction:column;width:100%;height:100dvh;min-height:0;overflow:hidden}
  .side{display:none}
- body.mobile-nav-open::after{content:"";position:fixed;inset:0;background:#000b;z-index:39;backdrop-filter:blur(3px)}
+ .mobile-nav-backdrop{display:none}
+ body.mobile-nav-open .mobile-nav-backdrop{display:block;position:fixed;inset:0;z-index:39;border:0;border-radius:0;padding:0;background:#000b;backdrop-filter:blur(3px);touch-action:manipulation}
  body.mobile-nav-open .side{display:flex;position:fixed;z-index:40;inset:0 auto 0 0;width:min(88vw,340px);height:100dvh;max-height:none;overflow-y:auto;overscroll-behavior:contain;border-right:1px solid var(--line);border-bottom:0;padding: max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));box-shadow:20px 0 70px #0009}
  body.mobile-nav-open .history{display:flex;flex-direction:column;max-height:30dvh;overflow:auto}
  .side .newchat,.side .settingsbtn{min-height:44px}
@@ -107,6 +108,7 @@ html{scrollbar-gutter:stable}
 </head>
 <body>
 <div class="shell">
+<button class="mobile-nav-backdrop" id="mobileNavBackdrop" type="button" aria-label="Close navigation menu" tabindex="-1"></button>
 <aside class="side">
  <div class="brand"><div class="logo">AI</div><span>Open Source AI Me</span></div><div class="tag">MODULAR ASSISTANT · 0.4.0</div>
  <button class="newchat" id="newChat">＋ &nbsp; New chat</button><button class="settingsbtn" id="openSettings">⚙ &nbsp; Settings & modules</button><button class="settingsbtn" id="openOsint">⌕ &nbsp; OSINT workspace</button><button class="settingsbtn" id="openSupport">♡ &nbsp; Support & report a bug</button><div class="navlabel">Your chat history</div><input class="chatsearch" id="chatSearch" type="search" placeholder="Search conversations…" aria-label="Search conversations"><div class="history" id="history"><div class="status">Sign in to load your chats.</div></div>
@@ -235,11 +237,13 @@ html{scrollbar-gutter:stable}
  }catch(error){$('history').textContent=error.message;$('storageState').textContent='Backend error';}}
  async function openChat(id,navigate=true){try{const data=await api('/api/chats/'+id);activeChatId=id;activeChatTitle=data.chat.title||'New chat';if(activeModule?.setConversation)activeModule.setConversation(id);messages.replaceChildren();if(!data.chat.messages.length)showEmpty('Send a message to begin this chat.');else for(const item of data.chat.messages)addMessage(item.role==='user'?'YOU':'AI MODULE',item.content,item.role==='user'?'user':'');$('chatSubtitle').textContent=activeChatTitle;if(navigate)navigateToChat(id,activeChatTitle);else navigateToChat(id,activeChatTitle,true);await loadChatButtonsOnly()}catch(error){addMessage('SYSTEM',error.message)}}
  async function loadChatButtonsOnly(){try{const data=await api('/api/chats');const history=$('history');history.replaceChildren();renderChatList(data.chats,history)}catch{}}
- const mobileMenu=$('mobileMenu');
+ const mobileMenu=$('mobileMenu'),mobileNavBackdrop=$('mobileNavBackdrop');
  function closeMobileNav(){document.body.classList.remove('mobile-nav-open');mobileMenu?.setAttribute('aria-expanded','false');mobileMenu?.setAttribute('aria-label','Open navigation menu');if(mobileMenu)mobileMenu.textContent='☰ Menu'}
+ mobileNavBackdrop?.addEventListener('click',event=>{event.preventDefault();closeMobileNav()});
+ mobileNavBackdrop?.addEventListener('pointerdown',()=>closeMobileNav());
  mobileMenu?.addEventListener('click',event=>{event.stopPropagation();const open=!document.body.classList.contains('mobile-nav-open');document.body.classList.toggle('mobile-nav-open',open);mobileMenu.setAttribute('aria-expanded',String(open));mobileMenu.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');mobileMenu.textContent=open?'✕ Close':'☰ Menu'});
  // The dimmed backdrop is a pseudo-element, so listen for taps outside the sidebar.
- document.addEventListener('click',event=>{if(!document.body.classList.contains('mobile-nav-open'))return;const side=$('side');if(side?.contains(event.target)||mobileMenu?.contains(event.target))return;closeMobileNav()});
+ document.addEventListener('pointerdown',event=>{if(!document.body.classList.contains('mobile-nav-open'))return;const side=$('side');if(side?.contains(event.target)||mobileMenu?.contains(event.target)||mobileNavBackdrop?.contains(event.target))return;closeMobileNav()},{capture:true});
  $('side').addEventListener('click',event=>{if(event.target.closest('.newchat,.settingsbtn,.chatlink,.logout'))closeMobileNav()});
  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMobileNav()});
  window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMobileNav()});
