@@ -3,7 +3,8 @@
  * Authentication and durable chat memory live in the Worker/D1 backend.
  * This module only calls the same-origin API; it contains no model secrets.
  */
-export const name = "OpenAI Module · Cloudflare Workers AI";
+export const id = "ai-engine";
+export const name = "General AI · Cloudflare Workers AI";
 export const version = "0.6.0";
 export const mode = "api";
 export const capabilities = ["chat", "account-history", "code-help", "read-only-public-web-fetch", "file-upload", "file-download", "read-only-sharing", "saved-memories", "voice-input", "spoken-replies", "conversation-continuity"];
@@ -27,7 +28,7 @@ export async function respond(prompt, conversationId = currentConversationId, im
     method: "POST",
     headers: { "content-type": "application/json", "accept": "application/json" },
     credentials: "same-origin",
-    body: JSON.stringify({ message, conversationId: conversationId || undefined, images: Array.isArray(images) ? images.slice(0, 3) : [] })
+    body: JSON.stringify({ message, conversationId: conversationId || undefined, images: Array.isArray(images) ? images.slice(0, 3) : [], moduleId: id })
   });
   let data;
   try { data = await response.json(); }
