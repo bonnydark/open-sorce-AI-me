@@ -1,5 +1,5 @@
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
-const VISION_MODEL = "@cf/meta/llama-3.2-11b-vision-instruct";
+const VISION_MODEL = "@cf/llava-hf/llava-1.5-7b-hf";
 
 const SYSTEM_PROMPT = `You are Open Source AI Me, a helpful multilingual assistant inside a private chat workspace.
 
@@ -73,26 +73,45 @@ When the user asks which mode/support they are currently using (for example, "wh
   const messages = Array.isArray(conversation)
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string")
     : [];
-  const systemMessage = { role: "system", content: SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile };
+  const visionInstruction = settings.visionMode ? "\n\nVISION AI MODE: You specialize in understanding images, screenshots, diagrams, documents, and visual debugging. Describe only details supported by the image; state uncertainty clearly." : "";\n  const systemMessage = { role: "system", content: SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile + visionInstruction };
   const imageData = Array.isArray(images) ? images.filter(image => typeof image === "string" && /^data:image\/(png|jpeg|webp|gif|bmp|avif);base64,/i.test(image)).slice(0, 3) : [];
-  const modelMessages = [...messages];
+  let result;
   if (imageData.length) {
-    let lastUser = -1;
-    for (let i = modelMessages.length - 1; i >= 0; i--) {
-      if (modelMessages[i]?.role === "user") { lastUser = i; break; }
+    // LLaVA accepts raw image bytes and a text prompt, and does not use the gated
+    // Meta Llama 3.2 Vision model that requires a one-time license agreement.
+    const transcript = messages.slice(-16).map(item => {
+      const content = typeof item.content === "string" ? item.content : "";
+      return (item.role || "user").toUpperCase() + ": " + content;
+    }).join("\n\n");
+    const visionPrompt = [
+      SYSTEM_PROMPT,
+      settings.visionMode ? "You are Vision AI. Carefully inspect attached images, answer the user's question about them, and separate visible evidence from guesses." : "",
+      "Conversation context (latest first is not required):",
+      transcript,
+      "User request: " + (messages.filter(item => item.role === "user").slice(-1)[0]?.content || "Describe and analyze the attached image.")
+    ].filter(Boolean).join("\n\n");
+    const descriptions = [];
+    for (const imageUrl of imageData) {
+      const match = imageUrl.match(/^data:image\/(?:png|jpeg|webp|gif|bmp|avif);base64,([\s\S]+)$/i);
+      if (!match) continue;
+      const binary = atob(match[1]);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const visionResult = await aiBinding.run(VISION_MODEL, {
+        image: [...bytes],
+        prompt: visionPrompt,
+        max_tokens: 1800
+      });
+      const description = visionResult?.description ?? visionResult?.response ?? visionResult?.output_text;
+      if (typeof description === "string" && description.trim()) descriptions.push(description.trim());
     }
-    if (lastUser >= 0) {
-      const text = modelMessages[lastUser].content;
-      modelMessages[lastUser] = { role: "user", content: [
-        { type: "text", text: typeof text === "string" ? text : "Please inspect the attached image(s) and answer the user's request." },
-        ...imageData.map(url => ({ type: "image_url", image_url: { url } }))
-      ] };
-    }
+    result = { response: descriptions.length ? descriptions.map((item, i) => imageData.length > 1 ? "Image " + (i + 1) + ":\n" + item : item).join("\n\n") : "" };
+  } else {
+    result = await aiBinding.run(MODEL, {
+      messages: [systemMessage, ...messages],
+      max_tokens: 2800
+    });
   }
-  const result = await aiBinding.run(imageData.length ? VISION_MODEL : MODEL, {
-    messages: [systemMessage, ...modelMessages],
-    max_tokens: 2800
-  });
   const reply = result?.response ?? result?.choices?.[0]?.message?.content;
   if (typeof reply !== "string" || !reply.trim()) {
     throw new Error("The model returned an empty response.");
