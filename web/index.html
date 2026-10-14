@@ -392,6 +392,13 @@ html{scrollbar-gutter:stable}
  async function addAttachmentFiles(fileList){for(const file of Array.from(fileList||[])){if(pendingAttachments.length>=3){$('attachmentStatus').textContent='Maximum 3 files per message.';break}const isImage=isImageFile(file);if(!isImage&&!allowedAttachmentExt.test(file.name)){$('attachmentStatus').textContent='Unsupported file: '+file.name+'. Attach images or text/code files.';continue}if(file.size>500000){$('attachmentStatus').textContent=file.name+' is over 500 KB.';continue}if(pendingAttachments.some(f=>f.name===file.name&&f.size===file.size))continue;try{if(isImage){const dataUrl=await readAsDataURL(file);pendingAttachments.push({name:file.name,size:file.size,isImage:true,mimeType:file.type||'image/png',content:dataUrl,previewUrl:dataUrl})}else{const content=await file.text();pendingAttachments.push({name:file.name,size:file.size,isImage:false,content})}renderAttachmentTray()}catch{$('attachmentStatus').textContent='Could not read '+file.name+'.'}}}
 
  $('filePicker').addEventListener('change',async()=>{await addAttachmentFiles($('filePicker').files);$('filePicker').value='';input.focus()});
+ $('cameraPicker').addEventListener('change',async()=>{await addAttachmentFiles($('cameraPicker').files);$('cameraPicker').value='';input.focus()});
+ $('capturePhoto').addEventListener('click',()=>{$('cameraPicker').click()});
+ function openImageViewer(src,alt='Image preview'){$('imageViewerImage').src=src;$('imageViewerImage').alt=alt;$('imageViewer').classList.remove('hidden')}
+ function closeImageViewer(){$('imageViewer').classList.add('hidden');$('imageViewerImage').removeAttribute('src')}
+ $('closeImageViewer').addEventListener('click',closeImageViewer);
+ $('imageViewer').addEventListener('click',event=>{if(event.target===$('imageViewer'))closeImageViewer()});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeImageViewer()});
  input.addEventListener('paste',async event=>{const files=Array.from(event.clipboardData?.items||[]).filter(item=>item.kind==='file').map(item=>item.getAsFile()).filter(Boolean);if(files.length){event.preventDefault();await addAttachmentFiles(files)}});
  form.addEventListener('dragover',event=>{if(Array.from(event.dataTransfer?.items||[]).some(item=>item.kind==='file')){event.preventDefault();form.classList.add('dragover')}});
  form.addEventListener('dragleave',event=>{if(!form.contains(event.relatedTarget))form.classList.remove('dragover')});
