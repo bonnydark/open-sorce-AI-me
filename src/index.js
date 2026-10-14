@@ -7,6 +7,7 @@ import { handleShareOwner, getSharedChat } from "./modules/shares.js";
 import { handleFiles } from "./modules/files.js";
 import { fetchPublicText } from "./modules/web-fetch.js";
 import { handleOsint } from "./modules/osint.js";
+import { handleSecurity } from "./modules/security.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
@@ -49,6 +50,8 @@ export default {
             response = await handleGitHubWorkspace(request, env, user, url);
           } else if (url.pathname === "/api/osint") {
             response = await handleOsint(request);
+          } else if (url.pathname === "/api/security/cves") {
+            response = await handleSecurity(request, url);
           } else if (url.pathname === "/api/settings") {
             response = await handleUserSettings(request, env, user);
           } else if (/^\/api\/chats\/[a-f0-9-]+\/share$/i.test(url.pathname)) {
