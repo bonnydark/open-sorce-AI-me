@@ -11,6 +11,7 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - Conversation links use `/{username}/c-{opaque-conversation-id}` without putting chat titles in the URL; the backend still checks account ownership.
 - Personalized welcome screen and shareable/deep-linkable conversation paths.
 - Per-account preferences: theme, response style, typewriter effect/speed, and code panels.
+- SaaS usage metering records request counts, input character counts, image counts, and module usage without storing prompt/response content in the usage table.
 - Dedicated backend model adapter at `src/modules/ai-engine.js`; browser adapter at `modul/ai-engine.js`.
 - Workers AI currently uses `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
 
@@ -24,6 +25,7 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - `modul/ai-engine.js` — browser adapter that calls the backend.
 - `migrations/0001_auth_chat.sql` — accounts, sessions, and chat history schema.
 - `migrations/0002_user_settings.sql` — per-user preferences.
+- `migrations/0005_usage_events.sql` — privacy-conscious usage metering.
 - `wrangler.toml` — Worker, Assets, Workers AI, and D1 bindings.
 
 ## Required D1 setup
@@ -37,6 +39,7 @@ After applying the migrations, `GET /api/health` reports whether the Worker sees
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/settings` and `PUT /api/settings`
+- `GET /api/usage` — authenticated usage summary for the last 30 days.
 - `GET /api/chats`
 - `POST /api/chats` — optional `{ "title": "New chat" }`
 - `GET /api/chats/:id`

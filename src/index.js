@@ -8,6 +8,7 @@ import { handleFiles } from "./modules/files.js";
 import { fetchPublicText } from "./modules/web-fetch.js";
 import { handleOsint } from "./modules/osint.js";
 import { handleSecurity } from "./modules/security.js";
+import { handleUsage, recordUsage } from "./modules/usage.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
@@ -52,6 +53,8 @@ export default {
             response = await handleOsint(request);
           } else if (url.pathname === "/api/security/cves") {
             response = await handleSecurity(request, url);
+          } else if (url.pathname === "/api/usage" && request.method === "GET") {
+            response = await handleUsage(request, env, user);
           } else if (url.pathname === "/api/settings") {
             response = await handleUserSettings(request, env, user);
           } else if (/^\/api\/chats\/[a-f0-9-]+\/share$/i.test(url.pathname)) {
@@ -127,6 +130,7 @@ export default {
                     const moduleSettings = { ...settings, ...moduleProfiles[moduleId], activeModule: moduleId };
                     const reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
+                    try { await recordUsage(env.DB, user.id, { moduleId, inputCharacters: message.length, imageCount: Array.isArray(body.images) ? body.images.length : 0 }); } catch (usageError) { /* Metering must never turn a successful AI reply into a failed chat. */ }
                     response = json({ reply, conversationId, title: chat.title, moduleId });
                   } catch (error) {
                     response = json({ error: "AI engine error: " + String(error?.message || error).slice(0, 240), conversationId }, 502);
