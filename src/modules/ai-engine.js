@@ -105,7 +105,8 @@ When the user asks which mode/support they are currently using (for example, "wh
     }).join("\n\n");
     const visionPrompt = [
       SYSTEM_PROMPT,
-      settings.visionMode ? "You are Vision AI. Carefully inspect attached images, answer the user's question about them, and separate visible evidence from guesses." : "",
+      "IMAGE INPUT IS PROVIDED TO YOU: inspect the supplied image bytes directly. Do not claim you cannot view or access an image when image input is present. Answer the user's actual question using visible evidence; if a specific detail is too small, obscured, or unreadable, say exactly which detail is uncertain instead of refusing the whole task.",
+      settings.visionMode ? "You are Vision AI. Carefully inspect attached images, answer the user's question about them, and separate visible evidence from guesses." : "Analyze the attached image as part of the user's current question.",
       "Conversation context (latest first is not required):",
       transcript,
       "User request: " + (messages.filter(item => item.role === "user").slice(-1)[0]?.content || "Describe and analyze the attached image.")
