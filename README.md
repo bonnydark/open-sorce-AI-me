@@ -1,4 +1,4 @@
-# Open Source AI Me
+# GortGPT
 
 A modular AI chat workspace built with a static frontend and a Cloudflare Worker backend.
 
