@@ -14,7 +14,7 @@ export async function searchWeb(env, query) {
 export async function searchNews(env, query) {
   // GDELT DOC API is public and does not require a search API key.
   const endpoint = new URL("https://api.gdeltproject.org/api/v2/doc/doc");
-  endpoint.searchParams.set("query", query + " (sourceCountry:Vietnam OR sourceCountry:UnitedStates OR sourceCountry:UnitedKingdom)");
+  endpoint.searchParams.set("query", query);
   endpoint.searchParams.set("mode", "ArtList");
   endpoint.searchParams.set("format", "json");
   endpoint.searchParams.set("maxrecords", "8");
