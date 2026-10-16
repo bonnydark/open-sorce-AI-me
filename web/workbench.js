@@ -45,7 +45,7 @@
     researchType = type;
     const isNews = type === "news";
     $("researchTitle").textContent = isNews ? "News Search" : "Live Web Research";
-    $("researchDescription").textContent = isNews ? "Search recent news stories using Brave Search. Check the publisher and publication time before relying on a report." : "Searches the web through a configured Brave Search API key. Results include source links; verify important claims against the original pages.";
+    $("researchDescription").textContent = isNews ? "Search recent news stories using Google News RSS. No search API key is required for News; check the publisher and publication time before relying on a report." : "Searches the web through a configured Brave Search API key. Results include source links; verify important claims against the original pages.";
     $("researchQuery").placeholder = isNews ? "Search recent news…" : "Search for current information…";
     $("researchSubmit").textContent = isNews ? "Search news" : "Search web";
     $("researchStatus").textContent = "";
