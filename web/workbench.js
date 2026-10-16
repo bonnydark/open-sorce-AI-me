@@ -40,24 +40,38 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  $("openResearch")?.addEventListener("click", () => show("researchGate"));
+  let researchType = "web";
+  const openResearchMode = type => {
+    researchType = type;
+    const isNews = type === "news";
+    $("researchTitle").textContent = isNews ? "News Search" : "Live Web Research";
+    $("researchDescription").textContent = isNews ? "Search recent news stories using Brave Search. Check the publisher and publication time before relying on a report." : "Searches the web through a configured Brave Search API key. Results include source links; verify important claims against the original pages.";
+    $("researchQuery").placeholder = isNews ? "Search recent news…" : "Search for current information…";
+    $("researchSubmit").textContent = isNews ? "Search news" : "Search web";
+    $("researchStatus").textContent = "";
+    $("researchResults").replaceChildren();
+    show("researchGate");
+    $("researchQuery").focus();
+  };
+  $("openResearch")?.addEventListener("click", () => openResearchMode("web"));
+  $("openNews")?.addEventListener("click", () => openResearchMode("news"));
   $("closeResearch")?.addEventListener("click", () => hide("researchGate"));
   $("researchForm")?.addEventListener("submit", async event => {
     event.preventDefault();
     const query = $("researchQuery").value.trim();
     if (!query) return;
-    $("researchStatus").textContent = "Searching current web sources…";
+    $("researchStatus").textContent = researchType === "news" ? "Searching recent news sources…" : "Searching current web sources…";
     $("researchResults").replaceChildren();
     try {
       const response = await fetch("/api/research/search", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query, type: researchType })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Search request failed.");
-      $("researchStatus").textContent = "Found " + data.results.length + " results. Verify important claims against original pages.";
+      $("researchStatus").textContent = "Found " + data.results.length + (researchType === "news" ? " news stories. Check publication times and original reporting." : " results. Verify important claims against original pages.");
       for (const item of data.results) {
         const link = document.createElement("a");
         link.className = "osintlink";
