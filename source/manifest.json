@@ -1,6 +1,6 @@
 {
   "name": "Open Source AI Me Module Registry",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "entry": "modul/ai-engine.js",
   "description": "Selectable AI modules loaded from this GitHub repository.",
   "modules": [
@@ -27,6 +27,12 @@
       "name": "Study Tutor",
       "entry": "modul/study-tutor.js",
       "description": "Step-by-step learning and explanations."
+    },
+    {
+      "id": "gort",
+      "name": "Gort · Standalone Coding AI",
+      "entry": "modul/gort.js",
+      "description": "Self-hosted inference, multi-language coding, and isolated account memory. Requires GORT_INFERENCE_URL."
     },
     {
       "id": "vision-ai",

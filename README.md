@@ -59,3 +59,13 @@ All chat-history, settings, and AI endpoints require a signed-in session. Conver
 Settings includes an optional Specialist mode toggle with three focused profiles: Bug bounty / security researcher (authorized scope, safe verification, impact analysis and responsible disclosure), Developer support (debugging, code review, tests and secure defaults), and Student support (step-by-step explanations, examples and practice). The selected profile adjusts AI guidance and workspace accent/UI prompts and is stored with the signed-in user's settings.
 
 The Support & report a bug form prepares a report locally and can copy it or open a prefilled GitHub issue draft. It does not submit the issue automatically. Do not put credentials, session cookies, private data, or sensitive undisclosed security details in public issues.
+
+
+## Gort — standalone coding module
+
+- Browser adapter: `modul/gort.js`; independent server engine and memory logic: `src/modules/gort.js`.
+- Gort specializes in code generation, review, debugging, refactoring, and revision across programming languages. It preserves conversation context, uses configured live web research context, and uses the chat UI's existing browser-based voice input/output.
+- Gort has a separate `gort_memories` table per account (`migrations/0006_gort_memories.sql`). With Automatic memories enabled, it stores explicit remember/preference statements; this is persistent memory, not model training or self-modifying weights.
+- The numeric Caution / guardrail level is stored as `ethicsLevel` (0–100). It adjusts how cautious and explanatory the assistant is; it cannot disable core safety or privacy protections.
+- Gort has no third-party AI inference fallback and never calls `env.AI`. Configure `GORT_INFERENCE_URL` to your own HTTPS OpenAI-compatible model server; optionally set `GORT_INFERENCE_TOKEN` and `GORT_MODEL_NAME` as Worker secrets/vars. The endpoint should expose `/v1/chat/completions` unless you supply that full path.
+- Cloudflare remains the web/API host and D1 store, but model inference must run on infrastructure you control. A Cloudflare Worker cannot itself host multi-billion-parameter model weights as a normal Worker bundle. Until the self-hosted inference endpoint is configured, Gort returns a setup error rather than using another company's AI.
