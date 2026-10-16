@@ -4,6 +4,10 @@ const defaults = {
   typewriterSpeed: 18,
   codeBlocks: true,
   answerStyle: "balanced",
+  personality: "classic",
+  humorLevel: "low",
+  researchMode: "on-demand",
+  sandboxMode: true,
   activeModule: "ai-engine",
   autoMemories: false,
   specialistMode: false,
@@ -12,6 +16,10 @@ const defaults = {
 const json = (data, status = 200) => Response.json(data, { status });
 const allowedThemes = new Set(["redline", "midnight", "ocean", "violet", "light"]);
 const allowedStyles = new Set(["concise", "balanced", "detailed"]);
+const allowedPersonalities = new Set(["serious", "casual", "classic", "playful", "custom"]);
+const allowedHumor = new Set(["off", "low", "medium", "high"]);
+const allowedResearch = new Set(["off", "on-demand", "proactive"]);
+function safeCustomStyle(value) { return typeof value === "string" ? value.replace(/[<>]/g, "").trim().slice(0, 500) : ""; }
 const allowedProfiles = new Set(["general", "bug-bounty", "developer", "student"]);
 const allowedModules = new Set(["ai-engine", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
 function cleanSettings(input = {}) {
@@ -21,6 +29,11 @@ function cleanSettings(input = {}) {
     typewriterSpeed: Math.max(0, Math.min(80, Number.isFinite(Number(input.typewriterSpeed)) ? Math.round(Number(input.typewriterSpeed)) : defaults.typewriterSpeed)),
     codeBlocks: input.codeBlocks !== false,
     answerStyle: allowedStyles.has(input.answerStyle) ? input.answerStyle : defaults.answerStyle,
+    personality: allowedPersonalities.has(input.personality) ? input.personality : defaults.personality,
+    humorLevel: allowedHumor.has(input.humorLevel) ? input.humorLevel : defaults.humorLevel,
+    customStyle: safeCustomStyle(input.customStyle),
+    researchMode: allowedResearch.has(input.researchMode) ? input.researchMode : defaults.researchMode,
+    sandboxMode: input.sandboxMode !== false,
     activeModule: allowedModules.has(input.activeModule) ? input.activeModule : defaults.activeModule,
     autoMemories: input.autoMemories === true,
     specialistMode: input.specialistMode === true,
