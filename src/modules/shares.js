@@ -20,7 +20,7 @@ export async function handleShareOwner(request, env, user, url) {
     }
     const token = randomToken();
     await env.DB.prepare("INSERT INTO chat_shares (id,conversation_id,user_id,token_hash) VALUES (?,?,?,?)").bind(crypto.randomUUID(),conversationId,user.id,await hash(token)).run();
-    return json({ ok: true, token, url: new URL("/share/" + token, request.url).toString() }, 201);
+    return json({ ok: true, token, url: new URL("/chat/share/" + token, request.url).toString() }, 201);
   }
   if (request.method === "DELETE") {
     await env.DB.prepare("UPDATE chat_shares SET revoked_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE conversation_id=? AND user_id=? AND revoked_at IS NULL").bind(conversationId,user.id).run();
