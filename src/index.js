@@ -1,6 +1,7 @@
 import { handleAuth, getSessionUser } from "./modules/auth.js";
 import { generateReply } from "./modules/ai-engine.js";
 import { generateCodeCopilotReply } from "./modules/code-copilot.js";
+import { generateSpecialistReply } from "./modules/specialists.js";
 import { generateGortReply, getGortMemories, learnGortMemory, handleGortMemories } from "./modules/gort.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
@@ -167,7 +168,11 @@ export default {
                     } else if (moduleId === "code-copilot" && !(Array.isArray(body.images) && body.images.length)) {
                       // Code Copilot has its own module file, system prompt, and model route.
                       reply = await generateCodeCopilotReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings);
+                    } else if (["security-analyst", "study-tutor"].includes(moduleId) && !(Array.isArray(body.images) && body.images.length)) {
+                      // Specialist modules use independent prompts and inference entry points.
+                      reply = await generateSpecialistReply(env.AI, moduleId, [...memoryContext, ...webContext, ...context], moduleSettings);
                     } else {
+                      // Vision requests use the image-capable path; text-only general chat remains unchanged.
                       reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     }
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
