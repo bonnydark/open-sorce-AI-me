@@ -1,5 +1,6 @@
 import { handleAuth, getSessionUser } from "./modules/auth.js";
 import { generateReply } from "./modules/ai-engine.js";
+import { generateCodeCopilotReply } from "./modules/code-copilot.js";
 import { generateGortReply, getGortMemories, learnGortMemory, handleGortMemories } from "./modules/gort.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
@@ -163,6 +164,9 @@ export default {
                       } else {
                         reply = await generateGortReply(env, [...webContext, ...context], moduleSettings, gortMemories);
                       }
+                    } else if (moduleId === "code-copilot" && !(Array.isArray(body.images) && body.images.length)) {
+                      // Code Copilot has its own module file, system prompt, and model route.
+                      reply = await generateCodeCopilotReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings);
                     } else {
                       reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     }
