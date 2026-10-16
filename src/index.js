@@ -38,7 +38,7 @@ export default {
     try {
       let response;
       if (url.pathname === "/api/health" && request.method === "GET") {
-        response = json({ ok: true, service: "open-source-ai-me", ai: Boolean(env.AI), database: Boolean(env.DB) });
+        response = json({ ok: true, service: "gortgpt", ai: Boolean(env.AI), database: Boolean(env.DB) });
       } else if (url.pathname.startsWith("/api/shared/") && request.method === "GET") {
         response = await getSharedChat(request, env, url);
       } else if (url.pathname.startsWith("/api/auth/")) {
