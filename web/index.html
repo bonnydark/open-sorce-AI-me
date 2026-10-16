@@ -304,7 +304,7 @@ body,body .side,body .chatbox,body .metric,body .settingscard,body .msg,body .co
  function addMessage(who,body,kind=''){
   const el=document.createElement('div');el.className='msg '+kind;const label=document.createElement('div');label.className='who';label.textContent=who;
   const imageRefs=[...String(body||'').matchAll(/\[\[OSAI_IMAGE:([a-f0-9-]+)\|([^\]]*)\]\]/gi)].map(match=>({id:match[1],name:(()=>{try{return decodeURIComponent(match[2])}catch{return match[2]}})()}));
-  const visibleBody=String(body||'').replace(/\[\[OSAI_IMAGE:[a-f0-9-]+\|[^\]]*\]\]/gi,'').replace(/IMAGE ATTACHED: [^\\n]+?Inspect the actual image data supplied with this request\\.?/gi,'').trimEnd();
+  const visibleBody=String(body||'').replace(/\[\[OSAI_IMAGE:[a-f0-9-]+\|[^\]]*\]\]/gi,'').replace(/IMAGE ATTACHED: [^\n]+?Inspect the actual image data supplied with this request\.?/gi,'').trimEnd();
   const text=document.createElement('div');text.className='msg-body';text.textContent=visibleBody;el.append(label,text);
   if(kind.includes('user')){
    const imageFiles=Array.isArray(pendingAttachments)?pendingAttachments.filter(file=>file.isImage&&file.previewUrl):[];
