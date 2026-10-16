@@ -178,9 +178,25 @@ export default {
       } else {
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
         if (url.pathname === "/") return env.ASSETS.fetch(request);
-        if (url.pathname === "/chat" || /^\/chat\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) || /^\/chat\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname) || /^\/[^/.]+\/?$/i.test(url.pathname) || /^\/[^/.]+\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) || /^\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname)) {
-          const chatUrl = new URL(request.url); chatUrl.pathname = "/chat.html";
-          return env.ASSETS.fetch(new Request(chatUrl, request));
+        // Serve the chat document explicitly for both canonical and legacy chat URLs.
+        // Do not depend on the static-assets SPA fallback for application routing.
+        const isChatDocument =
+          url.pathname === "/chat" ||
+          url.pathname === "/chat.html" ||
+          /^\/chat\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) ||
+          /^\/chat\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname) ||
+          /^\/[^/.]+\/?$/i.test(url.pathname) ||
+          /^\/[^/.]+\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) ||
+          /^\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname);
+        if (isChatDocument) {
+          const assetUrl = new URL("/chat.html", url.origin);
+          assetUrl.search = url.search;
+          const assetRequest = new Request(assetUrl, {
+            method: request.method,
+            headers: request.headers,
+            redirect: "manual"
+          });
+          return env.ASSETS.fetch(assetRequest);
         }
         return env.ASSETS.fetch(request);
       }
