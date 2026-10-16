@@ -147,10 +147,20 @@ export default {
                     const moduleSettings = { ...settings, ...moduleProfiles[moduleId], activeModule: moduleId };
                     let reply;
                     if (moduleId === "gort") {
-                      if (Array.isArray(body.images) && body.images.length) throw new Error("Gort's current self-hosted coding endpoint is text-only. Use Vision AI for image analysis.");
                       await learnGortMemory(env.DB, user.id, message, settings.autoMemories === true);
                       const gortMemories = await getGortMemories(env.DB, user.id);
-                      reply = await generateGortReply(env, [...webContext, ...context], moduleSettings, gortMemories);
+                      if (Array.isArray(body.images) && body.images.length) {
+                        // Gort's configured text inference endpoint may not accept images.
+                        // Use the app's existing vision-capable Workers AI path for image requests instead of rejecting them.
+                        reply = await generateReply(
+                          env.AI,
+                          [...memoryContext, ...webContext, ...context],
+                          { ...moduleSettings, visionMode: true },
+                          body.images
+                        );
+                      } else {
+                        reply = await generateGortReply(env, [...webContext, ...context], moduleSettings, gortMemories);
+                      }
                     } else {
                       reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     }
