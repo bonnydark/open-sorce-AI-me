@@ -156,7 +156,7 @@ export default {
       } else {
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
         if (url.pathname === "/") return env.ASSETS.fetch(request);
-        if (/^\/[^/.]+\/?$/i.test(url.pathname) || /^\/[^/.]+\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname)) {
+        if (/^\/[^/.]+\/?$/i.test(url.pathname) || /^\/[^/.]+\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) || /^\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname)) {
           const chatUrl = new URL(request.url); chatUrl.pathname = "/chat.html";
           return env.ASSETS.fetch(new Request(chatUrl, request));
         }
