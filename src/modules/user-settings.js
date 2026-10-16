@@ -11,7 +11,6 @@ const defaults = {
   researchMode: "on-demand",
   sandboxMode: true,
   activeModule: "ai-engine",
-  ethicsLevel: 50,
   autoMemories: false,
   specialistMode: false,
   workspaceProfile: "general"
@@ -42,7 +41,6 @@ function cleanSettings(input = {}) {
     researchMode: allowedResearch.has(input.researchMode) ? input.researchMode : defaults.researchMode,
     sandboxMode: input.sandboxMode !== false,
     activeModule: allowedModules.has(input.activeModule) ? input.activeModule : defaults.activeModule,
-    ethicsLevel: Math.max(0, Math.min(100, Number.isFinite(Number(input.ethicsLevel)) ? Math.round(Number(input.ethicsLevel)) : defaults.ethicsLevel)),
     autoMemories: input.autoMemories === true,
     specialistMode: input.specialistMode === true,
     workspaceProfile: allowedProfiles.has(input.workspaceProfile) ? input.workspaceProfile : defaults.workspaceProfile
