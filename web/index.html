@@ -209,24 +209,22 @@ body,body .side,body .chatbox,body .metric,body .settingscard,body .msg,body .co
 }
 
 
-/* Custom app-styled hover labels for icon-only controls (not browser title tooltips). */
-.toolbtn,.railbtn{position:relative}
+/* Expand icon buttons into labeled controls on hover/focus. */
+.toolbtn,.railbtn{position:relative;overflow:hidden;white-space:nowrap;transition:width .2s ease,min-width .2s ease,padding .2s ease,background .16s,border-color .16s,transform .16s}
+.toolbtn[data-tooltip],.railbtn[data-tooltip]{gap:8px}
 .toolbtn[data-tooltip]::after,.railbtn[data-tooltip]::after{
- content:attr(data-tooltip);position:absolute;z-index:1000;opacity:0;visibility:hidden;pointer-events:none;
- background:#241012;color:#fff4f4;border:1px solid #74303a;border-radius:7px;
- padding:6px 9px;font:600 11px/1.25 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:0;
- white-space:nowrap;box-shadow:0 8px 24px #0009;transform:translateY(4px);
- transition:opacity .14s ease,transform .14s ease,visibility .14s;
+ content:attr(data-tooltip);display:inline-block;max-width:0;opacity:0;overflow:hidden;
+ font:600 11px/1.2 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:0;
+ transition:max-width .2s ease,opacity .14s ease;
 }
-.toolbtn[data-tooltip]::after{left:50%;bottom:calc(100% + 7px);transform:translate(-50%,4px)}
-.railbtn[data-tooltip]::after{left:calc(100% + 9px);top:50%;transform:translate(-4px,-50%)}
+.toolbtn[data-tooltip]:hover,.toolbtn[data-tooltip]:focus-visible,
+.railbtn[data-tooltip]:hover,.railbtn[data-tooltip]:focus-visible{width:auto;min-width:max-content;padding-left:10px;padding-right:10px;z-index:20}
 .toolbtn[data-tooltip]:hover::after,.toolbtn[data-tooltip]:focus-visible::after,
-.railbtn[data-tooltip]:hover::after,.railbtn[data-tooltip]:focus-visible::after{
- opacity:1;visibility:visible
+.railbtn[data-tooltip]:hover::after,.railbtn[data-tooltip]:focus-visible::after{max-width:150px;opacity:1}
+.railbtn[data-tooltip]{overflow:hidden}
+@media(hover:none){
+ .toolbtn[data-tooltip]::after,.railbtn[data-tooltip]::after{display:none}
 }
-.toolbtn[data-tooltip]:hover::after,.toolbtn[data-tooltip]:focus-visible::after{transform:translate(-50%,0)}
-.railbtn[data-tooltip]:hover::after,.railbtn[data-tooltip]:focus-visible::after{transform:translate(0,-50%)}
-@media(hover:none){.toolbtn[data-tooltip]::after,.railbtn[data-tooltip]::after{display:none}}
 
 </style>
 </head>
