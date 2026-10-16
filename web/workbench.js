@@ -55,6 +55,7 @@
   };
   $("openResearch")?.addEventListener("click", () => openResearchMode("web"));
   $("openNews")?.addEventListener("click", () => openResearchMode("news"));
+  $("railNews")?.addEventListener("click", () => openResearchMode("news"));
   $("closeResearch")?.addEventListener("click", () => hide("researchGate"));
   $("researchForm")?.addEventListener("submit", async event => {
     event.preventDefault();
