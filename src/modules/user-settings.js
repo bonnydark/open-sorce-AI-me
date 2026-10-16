@@ -1,5 +1,7 @@
 const defaults = {
   theme: "redline",
+  customColorsEnabled: false,
+  customColors: {},
   typewriter: true,
   typewriterSpeed: 18,
   codeBlocks: true,
@@ -23,8 +25,12 @@ function safeCustomStyle(value) { return typeof value === "string" ? value.repla
 const allowedProfiles = new Set(["general", "bug-bounty", "developer", "student"]);
 const allowedModules = new Set(["ai-engine", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
 function cleanSettings(input = {}) {
+  const rawColors = input.customColors && typeof input.customColors === "object" && !Array.isArray(input.customColors) ? input.customColors : {};
+  const color = (key, fallback) => typeof rawColors[key] === "string" && /^#[0-9a-fA-F]{6}$/.test(rawColors[key]) ? rawColors[key].toLowerCase() : fallback;
   return {
     theme: allowedThemes.has(input.theme) ? input.theme : defaults.theme,
+    customColorsEnabled: input.customColorsEnabled === true,
+    customColors: { text: color("text", "#f0fff6"), accent: color("accent", "#45f39a"), background: color("background", "#050807"), panel: color("panel", "#0d1712"), border: color("border", "#24513b"), userBubble: color("userBubble", "#102a1c"), assistantBubble: color("assistantBubble", "#0d1712") },
     typewriter: input.typewriter !== false,
     typewriterSpeed: Math.max(0, Math.min(80, Number.isFinite(Number(input.typewriterSpeed)) ? Math.round(Number(input.typewriterSpeed)) : defaults.typewriterSpeed)),
     codeBlocks: input.codeBlocks !== false,
