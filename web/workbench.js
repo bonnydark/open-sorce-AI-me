@@ -1,5 +1,15 @@
 (() => {
   const $ = id => document.getElementById(id);
+
+  // App-styled tooltips: icon-only at rest, readable labels on hover/focus.
+  const syncIconTooltips = () => {
+    document.querySelectorAll(".toolbtn, .railbtn").forEach(button => {
+      const label = button.getAttribute("aria-label") || button.getAttribute("title");
+      if (label) button.dataset.tooltip = label;
+    });
+  };
+  syncIconTooltips();
+
   const show = id => { const el = $(id); if (!el) return; el.classList.remove("hidden", "is-closing"); };
   const hide = id => {
     const el = $(id);
@@ -65,6 +75,7 @@
     moreToolsButton.textContent = expanded ? "＋" : "−";
     moreToolsButton.title = expanded ? "Show more tools" : "Hide extra tools";
     moreToolsButton.setAttribute("aria-label", moreToolsButton.title);
+    moreToolsButton.dataset.tooltip = moreToolsButton.title;
   });
   // Let users dismiss the research/news dialog by clicking the dark backdrop.
   $("researchGate")?.addEventListener("click", event => {
