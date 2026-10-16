@@ -1,4 +1,10 @@
-const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const MODELS = {
+  "ai-engine": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "code-copilot": "@cf/qwen/qwen2.5-coder-32b-instruct",
+  "security-analyst": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "study-tutor": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "vision-ai": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+};
 const VISION_MODEL = "@cf/llava-hf/llava-1.5-7b-hf";
 
 const SYSTEM_PROMPT = `You are GortGPT, a helpful multilingual assistant inside a private chat workspace.
@@ -118,7 +124,8 @@ When the user asks which mode/support they are currently using (for example, "wh
     }
     result = { response: descriptions.length ? descriptions.map((item, i) => imageData.length > 1 ? "Image " + (i + 1) + ":\n" + item : item).join("\n\n") : "" };
   } else {
-    result = await aiBinding.run(MODEL, {
+    const model = MODELS[settings.activeModule] || MODELS["ai-engine"];
+    result = await aiBinding.run(model, {
       messages: [systemMessage, ...messages],
       max_tokens: 1024
     });

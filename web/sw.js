@@ -1,5 +1,5 @@
-const CACHE_NAME = "gortgpt-shell-v4";
-const SHELL = ["/", "/chat.html", "/manifest.json", "/icon.svg?v=4"];
+const CACHE_NAME = "gortgpt-shell-v5";
+const SHELL = ["/", "/chat.html", "/manifest.json", "/icon.svg?v=5"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
