@@ -25,12 +25,9 @@ export async function learnGortMemory(db, userId, message, enabled) {
 }
 
 export async function generateGortReply(env, conversation, settings = {}, memories = []) {
-  const endpoint = typeof env.GORT_INFERENCE_URL === "string" ? env.GORT_INFERENCE_URL.trim() : "";
-  if (!endpoint) throw new Error("Gort is a standalone module and does not fall back to third-party AI providers. Configure GORT_INFERENCE_URL to your own self-hosted OpenAI-compatible model server.");
-  let url;
-  try { url = new URL(endpoint); } catch { throw new Error("GORT_INFERENCE_URL must be a valid HTTPS URL."); }
-  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") throw new Error("GORT_INFERENCE_URL must use HTTPS outside localhost.");
-  const messages = Array.isArray(conversation) ? conversation.filter(item => item && ["system","user","assistant"].includes(item.role) && typeof item.content === "string").slice(-40) : [];
+  const messages = Array.isArray(conversation)
+    ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string").slice(-40)
+    : [];
   const caution = clamp(settings.ethicsLevel ?? 50, 0, 100);
   const cautionText = caution < 25
     ? "Caution preference: concise and low-friction for ordinary legitimate work; do not add unnecessary moralizing."
@@ -39,25 +36,48 @@ export async function generateGortReply(env, conversation, settings = {}, memori
       : "Caution preference: be conservative, call out material risks, and ask clarifying questions when intent or authorization is ambiguous.";
   const memoryText = memories.length ? "\n\nGORT'S PRIVATE USER MEMORY (account-scoped, editable/deletable separately):\n" + memories.map(item => "- " + item.content).join("\n") : "";
   const system = SYSTEM_PROMPT + "\n\n" + cautionText + memoryText;
-  const apiUrl = /\/v1\/chat\/completions\/?$/.test(url.pathname) ? url : new URL(url.pathname.replace(/\/$/, "") + (url.pathname.replace(/\/$/, "").endsWith("/v1") ? "/chat/completions" : "/v1/chat/completions"), url.origin);
-  const headers = { "content-type": "application/json", "accept": "application/json" };
-  if (typeof env.GORT_INFERENCE_TOKEN === "string" && env.GORT_INFERENCE_TOKEN) headers.authorization = "Bearer " + env.GORT_INFERENCE_TOKEN;
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: typeof env.GORT_MODEL_NAME === "string" && env.GORT_MODEL_NAME.trim() ? env.GORT_MODEL_NAME.trim() : "local-model",
-      messages: [{ role: "system", content: system }, ...messages],
-      temperature: 0.4,
-      max_tokens: 4096,
-      stream: false
-    }),
-    signal: AbortSignal.timeout(90000)
-  });
-  if (!response.ok) throw new Error("Self-hosted Gort inference server returned HTTP " + response.status + ".");
-  const data = await response.json();
-  const answer = data?.choices?.[0]?.message?.content ?? data?.response ?? data?.output_text;
-  if (typeof answer !== "string" || !answer.trim()) throw new Error("Self-hosted Gort inference server returned an empty response.");
+  const endpoint = typeof env.GORT_INFERENCE_URL === "string" ? env.GORT_INFERENCE_URL.trim() : "";
+
+  // Prefer the configured private OpenAI-compatible inference server when provided.
+  if (endpoint) {
+    let url;
+    try { url = new URL(endpoint); } catch { throw new Error("GORT_INFERENCE_URL must be a valid HTTPS URL."); }
+    if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") throw new Error("GORT_INFERENCE_URL must use HTTPS outside localhost.");
+    const apiUrl = /\/v1\/chat\/completions\/?$/.test(url.pathname) ? url : new URL(url.pathname.replace(/\/$/, "") + (url.pathname.replace(/\/$/, "").endsWith("/v1") ? "/chat/completions" : "/v1/chat/completions"), url.origin);
+    const headers = { "content-type": "application/json", "accept": "application/json" };
+    if (typeof env.GORT_INFERENCE_TOKEN === "string" && env.GORT_INFERENCE_TOKEN) headers.authorization = "Bearer " + env.GORT_INFERENCE_TOKEN;
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: typeof env.GORT_MODEL_NAME === "string" && env.GORT_MODEL_NAME.trim() ? env.GORT_MODEL_NAME.trim() : "local-model",
+        messages: [{ role: "system", content: system }, ...messages],
+        temperature: 0.4,
+        max_tokens: 4096,
+        stream: false
+      }),
+      signal: AbortSignal.timeout(90000)
+    });
+    if (!response.ok) throw new Error("Gort inference server returned HTTP " + response.status + ".");
+    const data = await response.json();
+    const answer = data?.choices?.[0]?.message?.content ?? data?.response ?? data?.output_text;
+    if (typeof answer !== "string" || !answer.trim()) throw new Error("Gort inference server returned an empty response.");
+    return answer.trim();
+  }
+
+  // The app already has a Cloudflare Workers AI binding. Use it by default so
+  // Gort works without requiring a separate GPU server or undocumented secret.
+  if (!env.AI || typeof env.AI.run !== "function") {
+    throw new Error("Gort has no inference provider. Configure the Cloudflare Workers AI binding AI, or set GORT_INFERENCE_URL to an HTTPS OpenAI-compatible model server.");
+  }
+  const result = await env.AI.run(
+    typeof env.GORT_CF_MODEL === "string" && env.GORT_CF_MODEL.trim()
+      ? env.GORT_CF_MODEL.trim()
+      : "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    { messages: [{ role: "system", content: system }, ...messages], max_tokens: 4096 }
+  );
+  const answer = result?.response ?? result?.choices?.[0]?.message?.content ?? result?.output_text;
+  if (typeof answer !== "string" || !answer.trim()) throw new Error("Cloudflare Workers AI returned an empty Gort response.");
   return answer.trim();
 }
 
