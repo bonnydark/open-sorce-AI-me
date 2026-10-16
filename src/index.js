@@ -1,6 +1,6 @@
 import { handleAuth, getSessionUser } from "./modules/auth.js";
 import { generateReply } from "./modules/ai-engine.js";
-import { generateGortReply, getGortMemories, learnGortMemory } from "./modules/gort.js";
+import { generateGortReply, getGortMemories, learnGortMemory, handleGortMemories } from "./modules/gort.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
 import { handleMemories } from "./modules/memories.js";
@@ -65,6 +65,8 @@ export default {
             response = await handleShareOwner(request, env, user, url);
           } else if (url.pathname === "/api/files" || /^\/api\/files\/[a-f0-9-]+(?:\/view)?$/i.test(url.pathname)) {
             response = await handleFiles(request, env, user, url);
+          } else if (url.pathname === "/api/gort/memories" || url.pathname.startsWith("/api/gort/memories/")) {
+            response = await handleGortMemories(request, env, user, url);
           } else if (url.pathname === "/api/memories" || /^\/api\/memories\/[a-f0-9-]+$/i.test(url.pathname)) {
             response = await handleMemories(request, env, user, url);
           } else if (url.pathname === "/api/chats" || /^\/api\/chats\/[a-f0-9-]+$/i.test(url.pathname)) {
