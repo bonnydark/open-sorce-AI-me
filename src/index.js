@@ -9,6 +9,7 @@ import { fetchPublicText } from "./modules/web-fetch.js";
 import { handleOsint } from "./modules/osint.js";
 import { handleSecurity } from "./modules/security.js";
 import { handleUsage, recordUsage } from "./modules/usage.js";
+import { handleResearchSearch } from "./modules/research.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
@@ -53,6 +54,8 @@ export default {
             response = await handleOsint(request);
           } else if (url.pathname === "/api/security/cves") {
             response = await handleSecurity(request, url);
+          } else if (url.pathname === "/api/research/search" && request.method === "POST") {
+            response = await handleResearchSearch(request, env);
           } else if (url.pathname === "/api/usage" && request.method === "GET") {
             response = await handleUsage(request, env, user);
           } else if (url.pathname === "/api/settings") {
