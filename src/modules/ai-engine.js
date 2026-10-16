@@ -1,7 +1,7 @@
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const VISION_MODEL = "@cf/llava-hf/llava-1.5-7b-hf";
 
-const SYSTEM_PROMPT = `You are Open Source AI Me, a helpful multilingual assistant inside a private chat workspace.
+const SYSTEM_PROMPT = `You are GortGPT, a helpful multilingual assistant inside a private chat workspace.
 
 CONVERSATION CONTINUITY
 - Treat all messages in the current conversation as one ongoing thread, not isolated prompts.
@@ -111,7 +111,7 @@ When the user asks which mode/support they are currently using (for example, "wh
       const visionResult = await aiBinding.run(VISION_MODEL, {
         image: [...bytes],
         prompt: visionPrompt,
-        max_tokens: 1800
+        max_tokens: 1024
       });
       const description = visionResult?.description ?? visionResult?.response ?? visionResult?.output_text;
       if (typeof description === "string" && description.trim()) descriptions.push(description.trim());
@@ -120,7 +120,7 @@ When the user asks which mode/support they are currently using (for example, "wh
   } else {
     result = await aiBinding.run(MODEL, {
       messages: [systemMessage, ...messages],
-      max_tokens: 2800
+      max_tokens: 1024
     });
   }
   const reply = result?.response ?? result?.choices?.[0]?.message?.content;

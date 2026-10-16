@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Open Source AI Me",
-  "short_name": "AI Me",
-  "description": "A modular AI workspace with private account-based chat history.",
+  "name": "GortGPT",
+  "short_name": "GortGPT",
+  "description": "A private AI workspace for chat, code, research, and vision.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
