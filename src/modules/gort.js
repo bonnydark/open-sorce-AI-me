@@ -24,7 +24,29 @@ export async function learnGortMemory(db, userId, message, enabled) {
 
 export async function generateGortReply(env, conversation, settings = {}, memories = []) {
   const endpoint = typeof env.GORT_INFERENCE_URL === "string" ? env.GORT_INFERENCE_URL.trim() : "";
-  if (!endpoint) throw new Error("Gort is a standalone module and does not fall back to third-party AI providers. Configure GORT_INFERENCE_URL to your own self-hosted OpenAI-compatible model server.");
+  if (!endpoint) {
+    // Use the project's existing Cloudflare Workers AI binding by default.
+    // Gort remains a separate module with its own prompt and memory; a
+    // self-hosted OpenAI-compatible endpoint is optional, not mandatory.
+    if (!env.AI) {
+      throw new Error("Gort inference is not configured: Cloudflare Workers AI binding AI is missing, and GORT_INFERENCE_URL is not set.");
+    }
+    const messages = Array.isArray(conversation)
+      ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string").slice(-40)
+      : [];
+    const memoryText = memories.length
+      ? "\n\nGORT'S PRIVATE USER MEMORY (account-scoped, editable/deletable separately):\n" + memories.map(item => "- " + item.content).join("\n")
+      : "";
+    const result = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+      messages: [{ role: "system", content: SYSTEM_PROMPT + memoryText }, ...messages],
+      max_tokens: 2048
+    });
+    const answer = result?.response ?? result?.choices?.[0]?.message?.content ?? result?.output_text;
+    if (typeof answer !== "string" || !answer.trim()) {
+      throw new Error("Cloudflare Workers AI returned an empty Gort response.");
+    }
+    return answer.trim();
+  }
   let url;
   try { url = new URL(endpoint); } catch { throw new Error("GORT_INFERENCE_URL must be a valid HTTPS URL."); }
   if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") throw new Error("GORT_INFERENCE_URL must use HTTPS outside localhost.");
