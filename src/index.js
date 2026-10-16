@@ -108,8 +108,8 @@ export default {
                         webContext = [{ role: "system", content: "The requested public website fetch failed safely: " + String(fetchError?.message || fetchError) }];
                       }
                     }
-                    const freshnessIntent = /\\b(latest|current|today|tonight|right now|real.?time|recent|news|this week|price today|current version|newest)\\b|mới nhất|hôm nay|hiện tại|thời gian thực|tin mới|giá hiện tại|phiên bản mới/i.test(message);
-                    const explicitResearch = /\\b(search the web|search online|look up online|browse the web|research online|google this|find current sources)\\b|tìm trên mạng|tìm trên web|tra cứu trên mạng|tìm thông tin mới|nghiên cứu trên mạng/i.test(message);
+                    const freshnessIntent = /\b(latest|current|today|tonight|right now|real.?time|recent|news|this week|price today|current version|newest)\b|mới nhất|hôm nay|hiện tại|thời gian thực|tin mới|giá hiện tại|phiên bản mới/i.test(message);
+                    const explicitResearch = /\b(search the web|search online|look up online|browse the web|research online|google this|find current sources)\b|tìm trên mạng|tìm trên web|tra cứu trên mạng|tìm thông tin mới|nghiên cứu trên mạng/i.test(message);
                     if (settings.researchMode !== "off" && (explicitResearch || (settings.researchMode === "proactive" && freshnessIntent))) {
                       try {
                         const results = await searchWeb(env, message.slice(0, 300));
