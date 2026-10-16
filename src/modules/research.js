@@ -25,18 +25,18 @@ export async function searchNews(env, query) {
   if (!upstream.ok) throw new Error("News provider request failed (HTTP " + upstream.status + ").");
   const xml = await upstream.text();
   const decode = value => String(value || "")
-    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, "$1")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
     .trim();
   const tag = (block, name) => {
-    const match = block.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + name + ">", "i"));
+    const match = block.match(new RegExp("<" + name + "(?:\s[^>]*)?>([\s\S]*?)<\/" + name + ">", "i"));
     return match ? decode(match[1]) : "";
   };
   const results = [];
-  for (const match of xml.matchAll(/<item(?:\\s[^>]*)?>([\\s\\S]*?)<\\/item>/gi)) {
+  for (const match of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)) {
     const item = match[1];
     const title = tag(item, "title");
     const url = tag(item, "link");
