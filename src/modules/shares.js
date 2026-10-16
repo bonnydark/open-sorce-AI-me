@@ -38,8 +38,8 @@ export async function getSharedFile(request, env, url) {
   const share = await env.DB.prepare("SELECT conversation_id AS conversationId, user_id AS userId FROM chat_shares WHERE token_hash=? AND revoked_at IS NULL").bind(await hash(token)).first();
   if (!share) return json({ error: "This share link is invalid or has been revoked." }, 404);
   // Only serve image IDs explicitly referenced in messages in this shared conversation.
-  const marker = "%[[OSAI_IMAGE:" + fileId + "|%";
-  const referenced = await env.DB.prepare("SELECT id FROM messages WHERE conversation_id=? AND content LIKE ? LIMIT 1").bind(share.conversationId, marker).first();
+  const marker = "[[OSAI_IMAGE:" + fileId + "|";
+  const referenced = await env.DB.prepare("SELECT id FROM messages WHERE conversation_id=? AND instr(content, ?) > 0 LIMIT 1").bind(share.conversationId, marker).first();
   if (!referenced) return json({ error: "This image is not part of the shared conversation." }, 404);
   const file = await env.DB.prepare("SELECT filename,content_type AS contentType,content FROM user_files WHERE id=? AND user_id=?").bind(fileId, share.userId).first();
   if (!file || !String(file.contentType || "").startsWith("image/")) return json({ error: "Shared image not found." }, 404);
