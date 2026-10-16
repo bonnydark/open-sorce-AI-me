@@ -619,6 +619,7 @@ input,textarea,select{accent-color:var(--accent)}
   startVoiceListening();
  }
  function speakReply(text){if(!voiceMode||!('speechSynthesis'in window))return;const spoken=String(text||'').replace(new RegExp(String.fromCharCode(96,96,96)+'[\\s\\S]*?'+String.fromCharCode(96,96,96),'g'),' Code block omitted. ').replace(/https?:\/\/\S+/g,'link').trim();if(!spoken)return;window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(spoken);utterance.lang=navigator.language||'en-US';utterance.onstart=()=>{speaking=true;try{recognition?.stop()}catch{}};utterance.onend=()=>{speaking=false;if(voiceMode)startVoiceListening()};utterance.onerror=()=>{speaking=false;if(voiceMode)startVoiceListening()};window.speechSynthesis.speak(utterance)}
+ $('settingEthicsLevel').addEventListener('input',()=>{$('ethicsLevelValue').textContent=$('settingEthicsLevel').value});
  $('voiceToggle').addEventListener('click',()=>setVoiceMode(!voiceMode));
  function resizePrompt(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,Math.floor(window.innerHeight*.33))+'px';input.style.overflowY=input.scrollHeight>Math.floor(window.innerHeight*.33)?'auto':'hidden'}
  input.addEventListener('input',resizePrompt);input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();form.requestSubmit()}});
