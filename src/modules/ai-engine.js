@@ -63,6 +63,9 @@ const profilePrompts = {
 export async function generateReply(aiBinding, conversation, settings = {}, images = []) {
   if (!aiBinding) throw new Error("Cloudflare Workers AI binding AI is missing.");
   const style = stylePrompts[settings.answerStyle] || stylePrompts.balanced;
+  const personality = personalityPrompts[settings.personality] || personalityPrompts.classic;
+  const humor = ({ off: "Use no humor.", low: "Use only occasional gentle humor.", medium: "Light humor is welcome when appropriate.", high: "Be witty and playful when appropriate, but stay useful and respectful." })[settings.humorLevel] || "Use only occasional gentle humor.";
+  const customStyle = typeof settings.customStyle === "string" ? settings.customStyle.trim().slice(0, 500) : "";
   const specialistEnabled = settings.specialistMode === true;
   const profileKey = specialistEnabled && Object.prototype.hasOwnProperty.call(profilePrompts, settings.workspaceProfile)
     ? settings.workspaceProfile
