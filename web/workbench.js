@@ -1,7 +1,17 @@
 (() => {
   const $ = id => document.getElementById(id);
-  const show = id => $(id)?.classList.remove("hidden");
-  const hide = id => $(id)?.classList.add("hidden");
+  const show = id => { const el = $(id); if (!el) return; el.classList.remove("hidden", "is-closing"); };
+  const hide = id => {
+    const el = $(id);
+    if (!el || el.classList.contains("hidden")) return;
+    if (el.classList.contains("settingsgate") || el.classList.contains("osintgate")) {
+      el.classList.add("is-closing");
+      let finished = false;
+      const finish = () => { if (finished) return; finished = true; el.classList.add("hidden"); el.classList.remove("is-closing"); el.removeEventListener("animationend", finish); };
+      el.addEventListener("animationend", finish);
+      window.setTimeout(finish, 280);
+    } else el.classList.add("hidden");
+  };
   $("openWorkbench")?.addEventListener("click", () => show("workbenchGate"));
   $("closeWorkbench")?.addEventListener("click", () => hide("workbenchGate"));
   $("clearSandbox")?.addEventListener("click", () => {
