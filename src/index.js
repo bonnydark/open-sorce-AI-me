@@ -62,7 +62,7 @@ export default {
             response = await handleUserSettings(request, env, user);
           } else if (/^\/api\/chats\/[a-f0-9-]+\/share$/i.test(url.pathname)) {
             response = await handleShareOwner(request, env, user, url);
-          } else if (url.pathname === "/api/files" || /^\/api\/files\/[a-f0-9-]+$/i.test(url.pathname)) {
+          } else if (url.pathname === "/api/files" || /^\/api\/files\/[a-f0-9-]+(?:\/view)?$/i.test(url.pathname)) {
             response = await handleFiles(request, env, user, url);
           } else if (url.pathname === "/api/memories" || /^\/api\/memories\/[a-f0-9-]+$/i.test(url.pathname)) {
             response = await handleMemories(request, env, user, url);
