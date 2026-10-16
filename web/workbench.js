@@ -45,7 +45,7 @@
     researchType = type;
     const isNews = type === "news";
     $("researchTitle").textContent = isNews ? "News Search" : "Live Web Research";
-    $("researchDescription").textContent = isNews ? "Search recent news stories using Google News RSS. No search API key is required for News; check the publisher and publication time before relying on a report." : "Searches the web through a configured Brave Search API key. Results include source links; verify important claims against the original pages.";
+    $("researchDescription").textContent = isNews ? "Search recent news stories. The app tries multiple public news providers if one is temporarily unavailable; check the publisher and publication time before relying on a report." : "Searches the web through a configured Brave Search API key. Results include source links; verify important claims against the original pages.";
     $("researchQuery").placeholder = isNews ? "Search recent news…" : "Search for current information…";
     $("researchSubmit").textContent = isNews ? "Search news" : "Search web";
     $("researchStatus").textContent = "";
@@ -57,6 +57,16 @@
   $("openNews")?.addEventListener("click", () => openResearchMode("news"));
   $("railNews")?.addEventListener("click", () => openResearchMode("news"));
   $("closeResearch")?.addEventListener("click", () => hide("researchGate"));
+  // Let users dismiss the research/news dialog by clicking the dark backdrop.
+  $("researchGate")?.addEventListener("click", event => {
+    if (event.target === $("researchGate")) hide("researchGate");
+  });
+  // Escape should close the top-level research/news dialog too.
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && $("researchGate") && !$("researchGate").classList.contains("hidden")) {
+      hide("researchGate");
+    }
+  });
   $("researchForm")?.addEventListener("submit", async event => {
     event.preventDefault();
     const query = $("researchQuery").value.trim();
