@@ -29,6 +29,33 @@ export async function handleShareOwner(request, env, user, url) {
   return json({ error: "Method not allowed." }, 405);
 }
 
+
+export async function getSharedFile(request, env, url) {
+  if (!env.DB) return json({ error: "Database is not configured." }, 503);
+  const match = url.pathname.match(/^\/api\/shared\/([a-f0-9]{64})\/files\/([a-f0-9-]+)\/view$/i);
+  if (!match) return json({ error: "Shared file not found." }, 404);
+  const [, token, fileId] = match;
+  const share = await env.DB.prepare("SELECT conversation_id AS conversationId, user_id AS userId FROM chat_shares WHERE token_hash=? AND revoked_at IS NULL").bind(await hash(token)).first();
+  if (!share) return json({ error: "This share link is invalid or has been revoked." }, 404);
+  // Only serve image IDs explicitly referenced in messages in this shared conversation.
+  const marker = "%[[OSAI_IMAGE:" + fileId + "|%";
+  const referenced = await env.DB.prepare("SELECT id FROM messages WHERE conversation_id=? AND content LIKE ? LIMIT 1").bind(share.conversationId, marker).first();
+  if (!referenced) return json({ error: "This image is not part of the shared conversation." }, 404);
+  const file = await env.DB.prepare("SELECT filename,content_type AS contentType,content FROM user_files WHERE id=? AND user_id=?").bind(fileId, share.userId).first();
+  if (!file || !String(file.contentType || "").startsWith("image/")) return json({ error: "Shared image not found." }, 404);
+  const encoded = String(file.content || "").match(/^data:image\/[a-z0-9.+-]+;base64,([\s\S]+)$/i);
+  if (!encoded) return json({ error: "Stored image data is invalid." }, 500);
+  const binary = atob(encoded[1]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Response(bytes, { status: 200, headers: {
+    "Content-Type": file.contentType,
+    "Content-Disposition": "inline",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "private, no-store"
+  }});
+}
+
 export async function getSharedChat(request, env, url) {
   if (!env.DB) return json({ error: "Database is not configured." }, 503);
   const token = url.pathname.split("/").filter(Boolean).pop() || "";
