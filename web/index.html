@@ -158,6 +158,28 @@ html{scrollbar-gutter:stable}
 .security-intel{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:13px;background:#0c0a0a}.security-intel h3{font-size:14px;margin:0 0 6px}.security-intel p{font-size:12px;color:var(--muted);margin:0 0 10px}.security-intel form{display:flex;gap:8px}.security-intel input{flex:1;min-width:0;background:#080808;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px}.security-intel button{border:0;border-radius:8px;padding:9px 12px;background:linear-gradient(135deg,#ff2638,#ff5b35);color:white;font-weight:750}.security-results{display:grid;gap:8px;margin-top:10px}.security-item{border:1px solid var(--line);border-radius:9px;padding:10px}.security-item strong{font-size:12px}.security-item small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.severity{display:inline-block;font-size:10px;padding:2px 6px;border-radius:99px;background:#3b171a;color:#ffb8b8;margin-left:6px}
 @media(max-width:760px){.attachment-tray{padding:8px 8px 0;gap:6px}.attachment-preview{max-width:100%;flex:1 1 100%}.security-intel form{flex-direction:column}}
 
+
+/* Smooth, lightweight workspace transitions */
+@keyframes osai-view-enter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes osai-modal-enter{from{opacity:0;transform:translateY(10px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes osai-backdrop-enter{from{opacity:0}to{opacity:1}}
+@keyframes osai-message-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes osai-soft-pulse{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 0 4px transparent}}
+.main{animation:osai-view-enter .28s cubic-bezier(.2,.7,.2,1) both}
+.authgate,.settingsgate,.osintgate{animation:osai-backdrop-enter .18s ease-out both}
+.authcard,.settingscard,.osintcard{animation:osai-modal-enter .24s cubic-bezier(.2,.75,.25,1) both;transform-origin:center}
+.taskgroup[open]>*:not(summary){animation:osai-view-enter .2s ease-out both}
+.msg{animation:osai-message-enter .22s ease-out both}
+.chatlink,.toolbtn,.settingsbtn,.newchat,.secondary,.authbtn,.closebtn,.suggestions button,.send,.logout{transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .16s ease,opacity .18s ease}
+button:active{transform:scale(.975)}
+.chatlink:hover,.toolbtn:hover,.settingsbtn:hover,.suggestions button:hover{transform:translateY(-1px)}
+.composer textarea,.composer input,.chatsearch,.settingrow select{transition:border-color .18s ease,box-shadow .18s ease}
+.metric,.modulecard,.chatbox{transition:border-color .2s ease,box-shadow .2s ease}
+.taskgroup summary{transition:color .18s ease}
+.taskgroup[open]{border-color:color-mix(in srgb,var(--accent) 48%,var(--line))}
+body,body .side,body .chatbox,body .metric,body .settingscard,body .msg,body .composer,body .composer textarea{transition:background-color .22s ease,border-color .22s ease,color .22s ease}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
 </style>
 </head>
 <body>
