@@ -47,7 +47,7 @@ export async function handleFiles(request, env, user, url) {
   if (match && request.method === "GET") {
     const file = await env.DB.prepare("SELECT filename,content_type AS contentType,content FROM user_files WHERE id=? AND user_id=?").bind(match[1],user.id).first();
     if (!file) return json({ error: "File not found." }, 404);
-    const filename = file.filename.replace(/["\\\\\\r\\n]/g, "_");
+    const filename = file.filename.replace(/["\\\r\n]/g, "_");
     const isView = Boolean(match[2]) && String(file.contentType || "").startsWith("image/");
     let payload = file.content;
     if (String(file.contentType || "").startsWith("image/")) {
