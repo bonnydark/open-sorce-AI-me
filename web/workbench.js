@@ -9,7 +9,13 @@
     $("sandboxPreview").srcdoc = "";
     $("sandboxStatus").textContent = "Sandbox cleared.";
   });
-  $("runSandbox")?.addEventListener("click", () => {
+  $("runSandbox")?.addEventListener("click", async () => {
+    try {
+      const settingsResponse = await fetch("/api/settings", { credentials: "same-origin" });
+      const settingsData = await settingsResponse.json();
+      if (!settingsResponse.ok) throw new Error(settingsData.error || "Could not read settings.");
+      if (settingsData.settings?.sandboxMode === false) { $("sandboxStatus").textContent = "Enable Code Workbench in Settings first."; return; }
+    } catch (error) { $("sandboxStatus").textContent = error.message; return; }
     const code = $("sandboxCode").value;
     const policy = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob:; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; connect-src \'none\'; font-src data:">';
     $("sandboxPreview").srcdoc = '<!doctype html><html><head><meta charset="utf-8">' + policy + '</head><body>' + code + '</body></html>';
