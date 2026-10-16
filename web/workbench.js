@@ -57,6 +57,15 @@
   $("openNews")?.addEventListener("click", () => openResearchMode("news"));
   $("railNews")?.addEventListener("click", () => openResearchMode("news"));
   $("closeResearch")?.addEventListener("click", () => hide("researchGate"));
+  const moreToolsButton = $("toggleMoreTools");
+  moreToolsButton?.addEventListener("click", () => {
+    const expanded = moreToolsButton.getAttribute("aria-expanded") === "true";
+    document.querySelectorAll(".tool-extra").forEach(button => button.classList.toggle("hidden", expanded));
+    moreToolsButton.setAttribute("aria-expanded", String(!expanded));
+    moreToolsButton.textContent = expanded ? "＋" : "−";
+    moreToolsButton.title = expanded ? "Show more tools" : "Hide extra tools";
+    moreToolsButton.setAttribute("aria-label", moreToolsButton.title);
+  });
   // Let users dismiss the research/news dialog by clicking the dark backdrop.
   $("researchGate")?.addEventListener("click", event => {
     if (event.target === $("researchGate")) hide("researchGate");
