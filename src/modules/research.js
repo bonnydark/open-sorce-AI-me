@@ -32,7 +32,7 @@ export async function searchNews(env, query) {
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
     .trim();
   const tag = (block, name) => {
-    const match = block.match(new RegExp("<" + name + "(?:\s[^>]*)?>([\s\S]*?)<\/" + name + ">", "i"));
+    const match = block.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + name + ">", "i"));
     return match ? decode(match[1]) : "";
   };
   const results = [];
