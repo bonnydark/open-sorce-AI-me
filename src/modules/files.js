@@ -43,7 +43,7 @@ export async function handleFiles(request, env, user, url) {
     await env.DB.prepare("INSERT INTO user_files (id,user_id,filename,content_type,content) VALUES (?,?,?,?,?)").bind(id,user.id,filename,contentType,content).run();
     return json({ file: { id, filename, contentType, size: content.length, url: "/api/files/" + id } }, 201);
   }
-  const match = path.match(/^\\/api\\/files\\/([a-f0-9-]+)(\\/view)?$/i);
+  const match = path.match(/^\/api\/files\/([a-f0-9-]+)(\/view)?$/i);
   if (match && request.method === "GET") {
     const file = await env.DB.prepare("SELECT filename,content_type AS contentType,content FROM user_files WHERE id=? AND user_id=?").bind(match[1],user.id).first();
     if (!file) return json({ error: "File not found." }, 404);
@@ -51,7 +51,7 @@ export async function handleFiles(request, env, user, url) {
     const isView = Boolean(match[2]) && String(file.contentType || "").startsWith("image/");
     let payload = file.content;
     if (String(file.contentType || "").startsWith("image/")) {
-      const encoded = String(file.content || "").match(/^data:image\\/[a-z0-9.+-]+;base64,([\\s\\S]+)$/i);
+      const encoded = String(file.content || "").match(/^data:image\/[a-z0-9.+-]+;base64,([\s\S]+)$/i);base64,([\\s\\S]+)$/i);
       if (!encoded) return json({ error: "Stored image data is invalid." }, 500);
       const binary = atob(encoded[1]);
       const bytes = new Uint8Array(binary.length);
