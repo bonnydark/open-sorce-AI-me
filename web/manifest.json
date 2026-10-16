@@ -3,14 +3,14 @@
   "name": "GortGPT",
   "short_name": "GortGPT",
   "description": "A private AI workspace for chat, code, research, and vision.",
-  "start_url": "/",
+  "start_url": "/chat.html",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#080808",
-  "theme_color": "#090909",
+  "background_color": "#050807",
+  "theme_color": "#050807",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/icon.svg?v=3,
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
