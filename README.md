@@ -13,7 +13,7 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - Per-account preferences: theme, response style, typewriter effect/speed, and code panels.
 - SaaS usage metering records request counts, input character counts, image counts, and module usage without storing prompt/response content in the usage table.
 - Dedicated backend model adapter at `src/modules/ai-engine.js`; browser adapter at `modul/ai-engine.js`.
-- Workers AI currently uses `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
+- Workers AI uses `@cf/meta/llama-3.3-70b-instruct-fp8-fast` by default, with an optional Qwen 2.5 Coder 32B model for the Code Copilot module when available in the account. Model weights are hosted by the inference provider; this repository stores the Worker code and model configuration, not multi-gigabyte model weights.
 
 ## Project structure
 - `web/index.html` — frontend, account UI, chat navigation, settings panel.
