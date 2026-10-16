@@ -60,3 +60,26 @@ export async function generateGortReply(env, conversation, settings = {}, memori
   if (typeof answer !== "string" || !answer.trim()) throw new Error("Self-hosted Gort inference server returned an empty response.");
   return answer.trim();
 }
+
+export async function handleGortMemories(request, env, user, url) {
+  if (!env.DB) return Response.json({ error: "Database binding DB is missing." }, { status: 503 });
+  if (url.pathname === "/api/gort/memories" && request.method === "GET") {
+    const rows = await env.DB.prepare("SELECT id,content,created_at AS createdAt,updated_at AS updatedAt FROM gort_memories WHERE user_id=? ORDER BY updated_at DESC LIMIT 100").bind(user.id).all();
+    return Response.json({ memories: rows.results || [] });
+  }
+  if (url.pathname === "/api/gort/memories" && request.method === "POST") {
+    let body; try { body = await request.json(); } catch { return Response.json({ error: "Expected JSON." }, { status: 400 }); }
+    const content = typeof body?.content === "string" ? body.content.trim() : "";
+    if (!content) return Response.json({ error: "Memory content is required." }, { status: 400 });
+    if (content.length > 1000) return Response.json({ error: "Gort memory must be 1,000 characters or less." }, { status: 413 });
+    const id = crypto.randomUUID();
+    await env.DB.prepare("INSERT INTO gort_memories (id,user_id,content) VALUES (?,?,?)").bind(id,user.id,content).run();
+    return Response.json({ memory: { id, content } }, { status: 201 });
+  }
+  const match = url.pathname.match(/^\/api\/gort\/memories\/([a-f0-9-]+)$/i);
+  if (match && request.method === "DELETE") {
+    const result = await env.DB.prepare("DELETE FROM gort_memories WHERE id=? AND user_id=?").bind(match[1],user.id).run();
+    return (result.meta?.changes || 0) > 0 ? Response.json({ ok: true }) : Response.json({ error: "Gort memory not found." }, { status: 404 });
+  }
+  return Response.json({ error: "Not found." }, { status: 404 });
+}
