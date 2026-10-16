@@ -133,6 +133,13 @@ html{scrollbar-gutter:stable}
 }
 
 
+/* Shared image previews must have a definite desktop width: the message bubble can otherwise collapse when its text is only an image marker. */
+.message-image-previews{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;margin-top:10px;width:100%;min-width:0}
+.message-image-previews img{display:block;width:min(220px,72vw);max-width:100%;height:auto;max-height:240px;flex:0 1 auto;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#080808;cursor:zoom-in}
+.msg:has(>.message-image-previews){width:min(800px,94%);min-width:0}
+.share-view .msg:has(>.message-image-previews){width:min(800px,94%);max-width:94%}
+@media(max-width:760px){.message-image-previews img{width:min(72vw,260px);max-width:100%;max-height:220px}.msg:has(>.message-image-previews){width:min(800px,96%);max-width:96%}}
+
 /* Camera capture, in-chat image viewer, and mobile action bar fixes */
 .message-image-previews{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .message-image-previews img{display:block;width:min(220px,100%);max-height:240px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#080808;cursor:zoom-in}
