@@ -12,48 +12,40 @@ export async function searchWeb(env, query) {
 }
 
 export async function searchNews(env, query) {
-  // Google News RSS is public and does not require an API key.
-  const endpoint = new URL("https://news.google.com/rss/search");
-  endpoint.searchParams.set("q", query);
-  endpoint.searchParams.set("hl", "vi");
-  endpoint.searchParams.set("gl", "VN");
-  endpoint.searchParams.set("ceid", "VN:vi");
+  // GDELT DOC API is public and does not require a search API key.
+  const endpoint = new URL("https://api.gdeltproject.org/api/v2/doc/doc");
+  endpoint.searchParams.set("query", query + " (sourceCountry:Vietnam OR sourceCountry:UnitedStates OR sourceCountry:UnitedKingdom)");
+  endpoint.searchParams.set("mode", "ArtList");
+  endpoint.searchParams.set("format", "json");
+  endpoint.searchParams.set("maxrecords", "8");
+  endpoint.searchParams.set("sort", "DateDesc");
   const upstream = await fetch(endpoint, {
-    headers: { "Accept": "application/rss+xml, application/xml, text/xml", "User-Agent": "OpenSourceAIme/1.0" },
-    signal: AbortSignal.timeout(10000)
+    headers: { "Accept": "application/json", "User-Agent": "OpenSourceAIme/1.0" },
+    signal: AbortSignal.timeout(12000)
   });
   if (!upstream.ok) throw new Error("News provider request failed (HTTP " + upstream.status + ").");
-  const xml = await upstream.text();
-  const decode = value => String(value || "")
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
-    .trim();
-  const tag = (block, name) => {
-    const match = block.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + name + ">", "i"));
-    return match ? decode(match[1]) : "";
-  };
-  const results = [];
-  for (const match of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)) {
-    const item = match[1];
-    const title = tag(item, "title");
-    const url = tag(item, "link");
-    const pubDate = tag(item, "pubDate");
-    const source = tag(item, "source");
-    if (!title || !url) continue;
-    try {
-      if (!["https:", "http:"].includes(new URL(url).protocol)) continue;
-    } catch { continue; }
-    results.push({
-      title: title.slice(0, 300),
+  let data;
+  try { data = await upstream.json(); } catch { throw new Error("News provider returned invalid JSON."); }
+  const results = (Array.isArray(data?.articles) ? data.articles : []).slice(0, 8).map(item => {
+    const url = String(item.url || "");
+    let validUrl = false;
+    try { validUrl = ["https:", "http:"].includes(new URL(url).protocol); } catch {}
+    if (!validUrl) return null;
+    const title = String(item.title || "").trim();
+    const domain = String(item.domain || "").trim();
+    const date = String(item.seendate || "").trim();
+    let age = "";
+    if (date) {
+      const parsed = new Date(date);
+      if (!Number.isNaN(parsed.getTime())) age = parsed.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+    }
+    return {
+      title: title.slice(0, 300) || domain || url,
       url,
-      description: source ? "Source: " + source : "Recent news result",
-      age: pubDate ? new Date(pubDate).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : ""
-    });
-    if (results.length >= 8) break;
-  }
+      description: domain ? "Source: " + domain : "Recent news result",
+      age
+    };
+  }).filter(Boolean);
   return results;
 }
 
