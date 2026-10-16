@@ -130,7 +130,7 @@ export default {
                     const moduleSettings = { ...settings, ...moduleProfiles[moduleId], activeModule: moduleId };
                     const reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
-                    await recordUsage(env.DB, user.id, { moduleId, inputCharacters: message.length, imageCount: Array.isArray(body.images) ? body.images.length : 0 });
+                    try { await recordUsage(env.DB, user.id, { moduleId, inputCharacters: message.length, imageCount: Array.isArray(body.images) ? body.images.length : 0 }); } catch (usageError) { /* Metering must never turn a successful AI reply into a failed chat. */ }
                     response = json({ reply, conversationId, title: chat.title, moduleId });
                   } catch (error) {
                     response = json({ error: "AI engine error: " + String(error?.message || error).slice(0, 240), conversationId }, 502);
