@@ -39,7 +39,7 @@ export async function generateGortReply(env, conversation, settings = {}, memori
       : "Caution preference: be conservative, call out material risks, and ask clarifying questions when intent or authorization is ambiguous.";
   const memoryText = memories.length ? "\n\nGORT'S PRIVATE USER MEMORY (account-scoped, editable/deletable separately):\n" + memories.map(item => "- " + item.content).join("\n") : "";
   const system = SYSTEM_PROMPT + "\n\n" + cautionText + memoryText;
-  const apiUrl = /\/v1\/chat\/completions\/?$/.test(url.pathname) ? url : new URL(url.pathname.replace(/\/$/, "") + "/v1/chat/completions", url.origin);
+  const apiUrl = /\/v1\/chat\/completions\/?$/.test(url.pathname) ? url : new URL(url.pathname.replace(/\/$/, "") + (url.pathname.replace(/\/$/, "").endsWith("/v1") ? "/chat/completions" : "/v1/chat/completions"), url.origin);
   const headers = { "content-type": "application/json", "accept": "application/json" };
   if (typeof env.GORT_INFERENCE_TOKEN === "string" && env.GORT_INFERENCE_TOKEN) headers.authorization = "Bearer " + env.GORT_INFERENCE_TOKEN;
   const response = await fetch(apiUrl, {
