@@ -51,7 +51,7 @@ export async function handleFiles(request, env, user, url) {
     const isView = Boolean(match[2]) && String(file.contentType || "").startsWith("image/");
     let payload = file.content;
     if (String(file.contentType || "").startsWith("image/")) {
-      const encoded = String(file.content || "").match(/^data:image\/[a-z0-9.+-]+;base64,([\s\S]+)$/i);base64,([\\s\\S]+)$/i);
+      const encoded = String(file.content || "").match(/^data:image\/[a-z0-9.+-]+;base64,([\s\S]+)$/i);
       if (!encoded) return json({ error: "Stored image data is invalid." }, 500);
       const binary = atob(encoded[1]);
       const bytes = new Uint8Array(binary.length);
