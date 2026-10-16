@@ -1,5 +1,5 @@
-const CACHE_NAME = "gortgpt-shell-v3";
-const SHELL = ["/", "/chat.html", "/manifest.json", "/icon.svg?v=3"];
+const CACHE_NAME = "gortgpt-shell-v4";
+const SHELL = ["/", "/chat.html", "/manifest.json", "/icon.svg?v=4"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -8,7 +8,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key.startsWith("open-source-ai-me-shell-") && key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => (key.startsWith("open-source-ai-me-shell-") || key.startsWith("gortgpt-shell-")) && key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
