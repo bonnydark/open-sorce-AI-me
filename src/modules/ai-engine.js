@@ -39,6 +39,14 @@ SAFETY AND PRIVACY
 
 Be a dependable assistant: preserve context, avoid hallucinations about capabilities, and give the user the next useful step.`;
 
+const personalityPrompts = {
+  serious: "Be direct, precise, professional, and evidence-led. Avoid jokes unless invited.",
+  casual: "Be friendly, natural, conversational, and warm without sacrificing accuracy.",
+  classic: "Be balanced, polite, clear, neutral, and useful.",
+  playful: "Use light wit and playful phrasing when appropriate, without obscuring the answer.",
+  custom: "Follow the user's custom style preferences when relevant while remaining accurate and safe."
+};
+
 const stylePrompts = {
   concise: "Prefer concise answers, focusing on the direct answer and essential steps.",
   balanced: "Use a balanced level of detail. Explain important decisions and provide practical steps.",
