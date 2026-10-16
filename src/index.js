@@ -147,10 +147,20 @@ export default {
                     const moduleSettings = { ...settings, ...moduleProfiles[moduleId], activeModule: moduleId };
                     let reply;
                     if (moduleId === "gort") {
-                      if (Array.isArray(body.images) && body.images.length) throw new Error("Gort's current self-hosted coding endpoint is text-only. Use Vision AI for image analysis.");
                       await learnGortMemory(env.DB, user.id, message, settings.autoMemories === true);
                       const gortMemories = await getGortMemories(env.DB, user.id);
-                      reply = await generateGortReply(env, [...webContext, ...context], moduleSettings, gortMemories);
+                      if (Array.isArray(body.images) && body.images.length) {
+                        // Gort's configured text inference endpoint may not accept images.
+                        // Use the app's existing vision-capable Workers AI path for image requests instead of rejecting them.
+                        reply = await generateReply(
+                          env.AI,
+                          [...memoryContext, ...webContext, ...context],
+                          { ...moduleSettings, visionMode: true },
+                          body.images
+                        );
+                      } else {
+                        reply = await generateGortReply(env, [...webContext, ...context], moduleSettings, gortMemories);
+                      }
                     } else {
                       reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     }
@@ -168,7 +178,7 @@ export default {
       } else {
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
         if (url.pathname === "/") return env.ASSETS.fetch(request);
-        if (/^\/[^/.]+\/?$/i.test(url.pathname) || /^\/[^/.]+\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) || /^\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname)) {
+        if (url.pathname === "/chat" || /^\/chat\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) || /^\/chat\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname) || /^\/[^/.]+\/?$/i.test(url.pathname) || /^\/[^/.]+\/c-[a-f0-9]{32}(?:-[^/]*)?\/?$/i.test(url.pathname) || /^\/share\/[a-f0-9]{64}\/?$/i.test(url.pathname)) {
           const chatUrl = new URL(request.url); chatUrl.pathname = "/chat.html";
           return env.ASSETS.fetch(new Request(chatUrl, request));
         }
