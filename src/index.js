@@ -4,7 +4,7 @@ import { generateGortReply, getGortMemories, learnGortMemory, handleGortMemories
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
 import { handleMemories } from "./modules/memories.js";
-import { handleShareOwner, getSharedChat } from "./modules/shares.js";
+import { handleShareOwner, getSharedChat, getSharedFile } from "./modules/shares.js";
 import { handleFiles } from "./modules/files.js";
 import { fetchPublicText } from "./modules/web-fetch.js";
 import { handleOsint } from "./modules/osint.js";
@@ -40,6 +40,8 @@ export default {
       let response;
       if (url.pathname === "/api/health" && request.method === "GET") {
         response = json({ ok: true, service: "gortgpt", ai: Boolean(env.AI), database: Boolean(env.DB) });
+      } else if (/^\/api\/shared\/[a-f0-9]{64}\/files\/[a-f0-9-]+\/view$/i.test(url.pathname) && request.method === "GET") {
+        response = await getSharedFile(request, env, url);
       } else if (url.pathname.startsWith("/api/shared/") && request.method === "GET") {
         response = await getSharedChat(request, env, url);
       } else if (url.pathname.startsWith("/api/auth/")) {
