@@ -225,7 +225,7 @@ html{scrollbar-gutter:stable}
  const OWNER='bonnydark',REPO='open-sorce-AI-me',BRANCH='main',rawBase='https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/'+BRANCH+'/';
  const $=id=>document.getElementById(id);
  const messages=$('messages'),form=$('chatForm'),input=$('prompt'),send=$('sendBtn');
- let activeModule=null,activeChatId=null,activeChatTitle='',currentUser=null,authMode='login',busy=false,voiceMode=false,recognition=null,speaking=false,preferences={theme:'redline',typewriter:true,typewriterSpeed:18,codeBlocks:true,answerStyle:'balanced',activeModule:'ai-engine',autoMemories:false,specialistMode:false,workspaceProfile:'general'};
+ let activeModule=null,activeChatId=null,activeChatTitle='',currentUser=null,authMode='login',busy=false,voiceMode=false,recognition=null,speaking=false,preferences={theme:'redline',typewriter:true,typewriterSpeed:18,codeBlocks:true,answerStyle:'balanced',personality:'classic',humorLevel:'low',customStyle:'',researchMode:'on-demand',sandboxMode:true,activeModule:'ai-engine',autoMemories:false,specialistMode:false,workspaceProfile:'general'};
  async function api(path,options={}) {
   const response=await fetch(path,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...(options.headers||{})}});
   let data={};try{data=await response.json()}catch{}
