@@ -4,8 +4,8 @@
  * This module only calls the same-origin API; it contains no model secrets.
  */
 export const id = "ai-engine";
-export const name = "GortGPT Core · Cloudflare Workers AI";
-export const version = "0.6.0";
+export const name = "GortGPT Core · Self-hosted AI";
+export const version = "0.7.0";
 export const mode = "api";
 export const capabilities = ["chat", "account-history", "code-help", "read-only-public-web-fetch", "file-upload", "file-download", "read-only-sharing", "saved-memories", "voice-input", "spoken-replies", "conversation-continuity"];
 export let currentConversationId = null;
