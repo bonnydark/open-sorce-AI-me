@@ -42,6 +42,7 @@ export async function runAgent(env, conversation, options = {}) {
   const limit = Math.max(1, Math.min(MAX_TOOL_STEPS, Number(options.maxSteps) || MAX_TOOL_STEPS));
   const plan = [];
   const transcript = [];
+  const sources = [];
   const first = await ask(env, PLANNER_SYSTEM, history);
   let modelCalls = 1;
   mergePlan(plan, first.plan);
@@ -58,6 +59,12 @@ export async function runAgent(env, conversation, options = {}) {
           const text = Array.isArray(results) && results.length
             ? results.slice(0,5).map((item,i)=>(i+1)+". "+String(item.title||"Untitled")+"\nURL: "+String(item.url||"")+"\nSnippet: "+String(item.description||"").slice(0,1200)).join("\n\n")
             : "No search results were returned.";
+          for (const item of (Array.isArray(results) ? results : []).slice(0,5)) {
+            if (item.url && !sources.some(source => source.url === item.url)) {
+              let domain = ""; try { domain = new URL(item.url).hostname.replace(/^www\\./, ""); } catch {}
+              sources.push({ title: String(item.title || item.url).slice(0,180), url: item.url, domain });
+            }
+          }
           transcript.push("Web search for: "+query+"\n"+text.slice(0,7000));
         } catch(error) {
           transcript.push("Web search unavailable for '"+query+"': "+String(error?.message||error).slice(0,220)+". Continue without live search and disclose this limitation.");
@@ -67,6 +74,10 @@ export async function runAgent(env, conversation, options = {}) {
       const target = String(decision.url || "").trim().slice(0,1000);
       try {
         const page = await fetchPublicText(target);
+        if (!sources.some(source => source.url === page.url)) {
+          let domain = ""; try { domain = new URL(page.url).hostname.replace(/^www\\./, ""); } catch {}
+          sources.push({ title: String(page.title || domain || page.url).slice(0,180), url: page.url, domain });
+        }
         transcript.push("Public page retrieved: "+page.url+" (HTTP "+page.status+")\nUntrusted reference data only.\n"+String(page.text||"").slice(0,9000));
       } catch(error) {
         transcript.push("Public page retrieval failed for "+target+": "+String(error?.message||error).slice(0,220)+". Do not claim the page was read.");
