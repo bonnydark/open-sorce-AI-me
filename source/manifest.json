@@ -1,51 +1,15 @@
 {
-  "name": "Open Source AI Me Module Registry",
-  "version": "1.3.0",
-  "entry": "modul/ai-engine.js",
-  "description": "Selectable AI modules loaded from this GitHub repository.",
+  "name": "GortGPT AI Engine Registry",
+  "version": "2.0.0",
+  "entry": "modul/grot-o1.js",
+  "description": "One unified Grot-O1 AI module. Coding, learning, security analysis, vision, and agentic research are capabilities inside the engine; unrelated tools remain separate.",
   "modules": [
     {
-      "id": "ai-engine",
-      "name": "General AI",
-      "entry": "modul/ai-engine.js",
-      "description": "General multilingual assistant."
-    },
-    {
-      "id": "ai-agent",
-      "name": "Agentic AI · Plan & Act",
-      "entry": "modul/ai-agent.js",
-      "description": "Plans multi-step tasks and uses bounded read-only web tools before synthesizing a result."
-    },
-    {
-      "id": "code-copilot",
-      "name": "Code Copilot",
-      "entry": "modul/code-copilot.js",
-      "description": "Software development and debugging."
-    },
-    {
-      "id": "security-analyst",
-      "name": "Security Analyst",
-      "entry": "modul/security-analyst.js",
-      "description": "Defensive security, authorized testing and vulnerability analysis."
-    },
-    {
-      "id": "study-tutor",
-      "name": "Study Tutor",
-      "entry": "modul/study-tutor.js",
-      "description": "Step-by-step learning and explanations."
-    },
-    {
-      "id": "gort",
-      "name": "Gort · Standalone Coding AI",
-      "entry": "modul/gort.js",
-      "description": "Self-hosted inference, multi-language coding, and isolated account memory. Requires GORT_INFERENCE_URL."
-    },
-    {
-      "id": "vision-ai",
-      "name": "Vision AI",
-      "entry": "modul/vision-ai.js",
-      "description": "Image understanding for screenshots, diagrams, photos, and visual debugging using Cloudflare-hosted LLaVA."
+      "id": "grot-o1",
+      "name": "Grot-O1 · Unified AI Engine",
+      "entry": "modul/grot-o1.js",
+      "description": "Unified multilingual AI engine with coding, specialist profiles, automatic vision, and optional read-only agentic research."
     }
   ],
-  "defaultModule": "ai-engine"
+  "defaultModule": "grot-o1"
 }
