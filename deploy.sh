@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> Source revision: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+
 echo "==> Applying pending D1 migrations to production..."
 npx wrangler d1 migrations apply open-sorce-ai-me-db --remote
 
