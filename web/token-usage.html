@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080808"><title>API Token Usage · GortGPT</title>
+<style>
+:root{color-scheme:dark;--bg:#080808;--panel:#121010;--line:#432329;--text:#f7eeee;--muted:#b5a0a0;--accent:#ff654f;--accent2:#ff9a56}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#3a171a 0,transparent 36%),var(--bg);color:var(--text);font:15px/1.55 Inter,system-ui,sans-serif}.wrap{width:min(1000px,100%);margin:auto;padding:24px 18px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}.brand{font-weight:900;letter-spacing:.05em}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--accent);font-weight:800}.panel{background:linear-gradient(145deg,#191212,#0e0c0c);border:1px solid var(--line);border-radius:17px;padding:20px;margin:14px 0}.muted{color:var(--muted);font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button,a.button{font:inherit;text-decoration:none;cursor:pointer;border:1px solid #69333a;border-radius:9px;padding:9px 12px;background:#211012;color:#ffe7e7}button.primary{background:linear-gradient(135deg,#ff654f,#ff9a56);color:#1b0806;border:0;font-weight:850}button:disabled{opacity:.5;cursor:wait}input,textarea{width:100%;padding:11px;border:1px solid #4a2a2d;border-radius:9px;background:#080808;color:var(--text);font:inherit}label{display:block;font-size:13px;font-weight:750;margin:12px 0 5px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{border:1px solid var(--line);background:#100d0d;border-radius:13px;padding:15px;min-width:0}.metric small{display:block;color:var(--muted)}.metric strong{display:block;font-size:clamp(18px,3vw,26px);overflow-wrap:anywhere;margin-top:6px}.bar{height:9px;background:#332023;border-radius:99px;overflow:hidden;margin:13px 0}.bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff654f,#ffb45b);transition:width .25s}.status{margin:10px 0;color:var(--muted);font-size:13px}.error{color:#ff9caa}.row{display:grid;grid-template-columns:1fr 180px;gap:12px;align-items:end}.hidden{display:none!important}h1{font-size:clamp(25px,5vw,38px);margin:6px 0 4px;overflow-wrap:anywhere}h2{font-size:18px;margin:0 0 8px}@media(max-width:650px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:15px}.row{grid-template-columns:1fr}.wrap{padding:16px 12px 40px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="top"><div><div class="brand">GORTGPT <span class="eyebrow">/ TOKEN CONSOLE</span></div><div class="muted">Private API usage and limit control</div></div><a class="button" href="/chat.html">← Back to workspace</a></div>
+<div id="status" class="status">Checking account…</div>
+<section id="dashboard" class="hidden">
+<div class="panel"><div class="eyebrow">Selected token</div><h1 id="tokenName">API token</h1><div class="muted" id="tokenMeta"></div><p class="muted" id="tokenPurpose"></p><div class="actions"><button id="showToken">Show token</button><button id="refresh" class="primary">Refresh data</button></div><div id="revealBox" class="hidden"><label for="tokenValue">Secret token — keep it private</label><textarea id="tokenValue" rows="3" readonly></textarea><button id="copyToken" style="margin-top:8px">Copy token</button></div></div>
+<div class="metrics">
+<div class="metric"><small>Requests today</small><strong id="todayRequests">—</strong><small id="dailyLimitLabel">Daily limit</small></div>
+<div class="metric"><small>Total requests</small><strong id="totalRequests">—</strong><small>Successful API responses</small></div>
+<div class="metric"><small>Characters processed today</small><strong id="todayChars">—</strong><small>Input + output</small></div>
+<div class="metric"><small>Estimated total cost</small><strong id="totalCost">—</strong><small>Estimate, not provider invoice</small></div>
+</div>
+<div class="panel"><h2>Daily usage limit</h2><div class="muted">This token has its own limit, separate from the account-wide quota. Resets at 07:00 Vietnam time (00:00 UTC).</div><div class="bar"><span id="usageBar"></span></div><div id="usageText" class="muted"></div><div class="row"><div><label for="purpose">Purpose / intended use</label><input id="purpose" maxlength="160" placeholder="e.g. my study assistant bot"></div><div><label for="dailyLimit">Requests per day (1–10,000)</label><input id="dailyLimit" type="number" min="1" max="10000" value="100"></div></div><div class="actions"><button class="primary" id="saveSettings">Save purpose and limit</button><button id="revokeToken">Revoke token</button><button id="deleteToken" class="hidden">Delete revoked token</button></div><div id="actionStatus" class="status"></div></div>
+<div class="panel"><h2>Usage details</h2><div class="muted" id="usageDetails">Loading…</div><p class="muted">Estimated cost is calculated using the rates configured by the site owner. If rates are placeholders or not configured, the displayed cost may be approximate or unavailable.</p></div>
+</section>
+</main>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const id=new URLSearchParams(location.search).get('id')||'';
+let tokenData=null;
+async function api(path,options){const response=await fetch(path,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...(options&&options.headers||{})}});let data={};try{data=await response.json()}catch{}if(!response.ok){const e=data.error;throw new Error(typeof e==='string'?e:(e&&e.message)||('Request failed: HTTP '+response.status))}return data}
+function number(v){return Number(v||0).toLocaleString()}
+function cost(v){return v==null||!Number.isFinite(Number(v))?'Not configured':'$'+Number(v).toFixed(4)+' USD'}
+function showStatus(message,error){$('actionStatus').textContent=message;$('actionStatus').className='status'+(error?' error':'')}
+async function load(){
+ if(!id){$('status').textContent='Missing token ID in the URL.';$('status').className='status error';return}
+ try{
+  const data=await api('/api/keys/'+encodeURIComponent(id)+'/usage');
+  tokenData=data.token;$('dashboard').classList.remove('hidden');$('status').textContent='Signed in — only the account that owns this token can access these statistics.';
+  $('tokenName').textContent=tokenData.label||'API token';$('tokenMeta').textContent=(tokenData.prefix||'gort_')+'… · '+(tokenData.revoked?'REVOKED':'ACTIVE');
+  $('tokenPurpose').textContent='Purpose: '+(tokenData.purpose||'General API use');
+  $('todayRequests').textContent=number(data.today.requests);$('dailyLimitLabel').textContent='of '+number(tokenData.dailyLimit)+' requests';
+  $('totalRequests').textContent=number(data.total.total_requests);
+  $('todayChars').textContent=number(Number(data.today.input_characters||0)+Number(data.today.output_characters||0));
+  $('totalCost').textContent=cost(data.total.estimated_cost_usd);
+  const used=Number(data.today.requests||0),limit=Math.max(1,Number(tokenData.dailyLimit||100)),pct=Math.min(100,used/limit*100);
+  $('usageBar').style.width=pct+'%';$('usageText').textContent=used+' / '+limit+' requests used today ('+Math.round(pct)+'%). '+(tokenData.revoked?'This token is revoked.':'Remaining: '+Math.max(0,limit-used)+'.');
+  $('purpose').value=tokenData.purpose||'';$('dailyLimit').value=limit;
+  $('saveSettings').disabled=tokenData.revoked;$('revokeToken').classList.toggle('hidden',tokenData.revoked);$('deleteToken').classList.toggle('hidden',!tokenData.revoked);
+  $('usageDetails').textContent='Today: '+number(data.today.requests)+' requests · '+number(data.today.input_characters)+' input characters · '+number(data.today.output_characters)+' output characters · '+cost(data.today.estimated_cost_usd)+'. All time: '+number(data.total.total_requests)+' requests · '+number(data.total.input_characters)+' input characters · '+number(data.total.output_characters)+' output characters.';
+ }catch(error){$('status').textContent=error.message;$('status').className='status error';$('dashboard').classList.add('hidden')}
+}
+$('refresh').addEventListener('click',()=>load().catch(e=>showStatus(e.message,true)));
+$('showToken').addEventListener('click',async()=>{try{const data=await api('/api/keys/'+encodeURIComponent(id)+'/reveal');$('tokenValue').value=data.token;$('revealBox').classList.remove('hidden');showStatus('Token revealed. Keep it private.')}catch(e){showStatus(e.message,true)}});
+$('copyToken').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('tokenValue').value);showStatus('Token copied.')}catch{ $('tokenValue').focus();$('tokenValue').select();showStatus('Select the token and copy it manually.')}});
+$('saveSettings').addEventListener('click',async()=>{const dailyLimit=Number($('dailyLimit').value);if(!Number.isInteger(dailyLimit)||dailyLimit<1||dailyLimit>10000){showStatus('Limit must be between 1 and 10,000 requests per day.',true);return}try{await api('/api/keys/'+encodeURIComponent(id)+'/settings',{method:'PATCH',body:JSON.stringify({purpose:$('purpose').value.trim(),dailyLimit})});showStatus('Purpose and daily limit saved.');await load()}catch(e){showStatus(e.message,true)}});
+$('revokeToken').addEventListener('click',async()=>{if(!confirm('Revoke this token? Any application using it will stop working.'))return;try{await api('/api/keys/'+encodeURIComponent(id),{method:'DELETE',body:'{}'});showStatus('Token revoked.');await load()}catch(e){showStatus(e.message,true)}});
+$('deleteToken').addEventListener('click',async()=>{if(!confirm('Permanently delete this revoked token and its usage statistics?'))return;try{await api('/api/keys/'+encodeURIComponent(id),{method:'DELETE',body:'{}'});location.href='/chat.html'}catch(e){showStatus(e.message,true)}});
+api('/api/auth/me').then(data=>{if(!data.user){location.href='/chat.html';return}return load()}).catch(error=>{$('status').textContent='Sign in first to view token usage. '+error.message;$('status').className='status error'});
+})();
+</script></body></html>
