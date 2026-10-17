@@ -44,12 +44,34 @@ async function readPlanUsage(db, userId) {
   await ensureUsageSchema(db);
   let user;
   try {
-    user = await db.prepare("SELECT plan, token_balance FROM users WHERE id=?").bind(userId).first();
+    user = await db.prepare("SELECT id,plan,token_balance FROM users WHERE id=?").bind(userId).first();
   } catch {
-    user = { plan: "free", token_balance: 0 };
+    user = { id:userId, plan:"free", token_balance:0 };
   }
-  const requestedPlan = String(user?.plan || "free").toLowerCase();
-  const plan = Object.hasOwn(PLAN_LIMITS, requestedPlan) ? requestedPlan : "free";
+  let ownerId = userId;
+  let effectivePlan = String(user?.plan || "free").toLowerCase();
+  let membership = null;
+  try {
+    membership = await db.prepare(`SELECT m.owner_user_id AS ownerId,o.plan AS ownerPlan
+      FROM business_team_memberships m JOIN users o ON o.id=m.owner_user_id
+      WHERE m.member_user_id=? AND m.status='active' LIMIT 1`).bind(userId).first();
+  } catch {}
+  if (membership && String(membership.ownerPlan).toLowerCase()==="business") {
+    ownerId = membership.ownerId;
+    effectivePlan = "business";
+    user = await db.prepare("SELECT id,plan,token_balance FROM users WHERE id=?").bind(ownerId).first() || user;
+  }
+  const plan = Object.hasOwn(PLAN_LIMITS, effectivePlan) ? effectivePlan : "free";
+  let usageIds = [ownerId];
+  if (plan==="business" && ownerId===userId) {
+    try {
+      const members = await db.prepare("SELECT member_user_id AS id FROM business_team_memberships WHERE owner_user_id=? AND status='active'").bind(ownerId).all();
+      usageIds = [ownerId,...(members.results||[]).map(row=>row.id)];
+    } catch {}
+  } else if (ownerId!==userId) {
+    const members = await db.prepare("SELECT member_user_id AS id FROM business_team_memberships WHERE owner_user_id=? AND status='active'").bind(ownerId).all();
+    usageIds = [ownerId,...(members.results||[]).map(row=>row.id)];
+  }
   const monthly = await db.prepare(`
       SELECT COUNT(*) AS requests,
              COALESCE(SUM(input_characters),0) AS inputCharacters,
@@ -58,20 +80,18 @@ async function readPlanUsage(db, userId) {
              SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS pricedRequests,
              MIN(created_at) AS firstEventAt
       FROM usage_events
-      WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
-    `).bind(userId).first();
+      WHERE created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
+        AND user_id IN (${usageIds.map(()=>"?").join(",")})
+    `).bind(...usageIds).first();
   const monthlyRequests = Number(monthly?.requests || 0);
   const tokenBalance = Math.max(0, Number(user?.token_balance || 0));
   const monthlyLimit = PLAN_LIMITS[plan].monthlyRequests;
   const monthlyRemaining = Math.max(0, monthlyLimit - monthlyRequests);
   return {
-    plan, planLabel: PLAN_LIMITS[plan].label,
+    plan, planLabel: PLAN_LIMITS[plan].label, quotaOwnerId:ownerId,
+    businessRole: membership ? "business(add)" : plan==="business" ? "business(main)" : null,
     period: "calendar_month_utc",
-    requests: monthlyRequests,
-    monthlyRequests,
-    monthlyLimit,
-    monthlyRemaining,
-    tokenBalance,
+    requests: monthlyRequests, monthlyRequests, monthlyLimit, monthlyRemaining, tokenBalance,
     remaining: monthlyRemaining + tokenBalance,
     allowed: monthlyRequests < monthlyLimit || tokenBalance > 0,
     inputCharacters: Number(monthly?.inputCharacters || 0),
@@ -91,7 +111,7 @@ export async function recordUsage(db, userId, { moduleId = "ai-engine", modelId 
   const quota = await readPlanUsage(db, userId);
   if (quota.monthlyRequests >= quota.monthlyLimit) {
     // Plan allowance is measured per UTC calendar month. Bonus credits are only spent after it is exhausted.
-    const debit = await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
+    const debit = await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(quota.quotaOwnerId || userId).run();
     const changed = Number(debit?.meta?.changes || 0);
     if (changed < 1) throw new Error("Monthly plan allowance is exhausted and no bonus credits remain.");
   }
