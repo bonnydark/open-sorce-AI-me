@@ -1,5 +1,6 @@
 const json = (data, status = 200) => Response.json(data, { status });
 
+export const DAILY_TOKEN_ALLOWANCE = 100;
 export const PLAN_LIMITS = Object.freeze({
   free: { monthlyRequests: 100, label: "Free" },
   pro: { monthlyRequests: 2000, label: "Pro" },
@@ -35,31 +36,36 @@ async function readPlanUsage(db, userId) {
   }
   const requestedPlan = String(user?.plan || "free").toLowerCase();
   const plan = Object.hasOwn(PLAN_LIMITS, requestedPlan) ? requestedPlan : "free";
-  const usage = await db.prepare(`
-    SELECT COUNT(*) AS requests,
-           COALESCE(SUM(input_characters),0) AS inputCharacters,
-           COALESCE(SUM(image_count),0) AS images,
-           MIN(created_at) AS firstEventAt
-    FROM usage_events
-    WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
-  `).bind(userId).first();
-  const limit = PLAN_LIMITS[plan].monthlyRequests;
-  const requests = Number(usage?.requests || 0);
+  const [monthly, daily] = await Promise.all([
+    db.prepare(`
+      SELECT COUNT(*) AS requests,
+             COALESCE(SUM(input_characters),0) AS inputCharacters,
+             COALESCE(SUM(image_count),0) AS images,
+             MIN(created_at) AS firstEventAt
+      FROM usage_events
+      WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
+    `).bind(userId).first(),
+    db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')").bind(userId).first()
+  ]);
+  const monthlyRequests = Number(monthly?.requests || 0);
+  const dailyRequests = Number(daily?.requests || 0);
   const tokenBalance = Math.max(0, Number(user?.token_balance || 0));
-  const planRemaining = Math.max(0, limit - requests);
+  const dailyRemaining = Math.max(0, DAILY_TOKEN_ALLOWANCE - dailyRequests);
   return {
-    plan,
-    planLabel: PLAN_LIMITS[plan].label,
-    period: "calendar_month",
-    requests,
-    monthlyLimit: limit,
-    planRemaining,
+    plan, planLabel: PLAN_LIMITS[plan].label,
+    period: "calendar_day_utc",
+    dailyAllowance: DAILY_TOKEN_ALLOWANCE,
+    dailyRequests,
+    dailyRemaining,
+    requests: monthlyRequests,
+    monthlyRequests,
+    monthlyLimit: PLAN_LIMITS[plan].monthlyRequests,
     tokenBalance,
-    remaining: planRemaining + tokenBalance,
-    allowed: requests < limit || tokenBalance > 0,
-    inputCharacters: Number(usage?.inputCharacters || 0),
-    images: Number(usage?.images || 0),
-    firstEventAt: usage?.firstEventAt || null
+    remaining: dailyRemaining + tokenBalance,
+    allowed: dailyRequests < DAILY_TOKEN_ALLOWANCE || tokenBalance > 0,
+    inputCharacters: Number(monthly?.inputCharacters || 0),
+    images: Number(monthly?.images || 0),
+    firstEventAt: monthly?.firstEventAt || null
   };
 }
 
@@ -69,15 +75,10 @@ export async function checkPlanQuota(db, userId) {
 
 export async function recordUsage(db, userId, { moduleId = "ai-engine", inputCharacters = 0, imageCount = 0 } = {}) {
   await ensureUsageSchema(db);
-  const account = await db.prepare("SELECT plan FROM users WHERE id=?").bind(userId).first();
-  const plan = Object.hasOwn(PLAN_LIMITS, String(account?.plan || "free").toLowerCase()) ? String(account?.plan || "free").toLowerCase() : "free";
-  const limit = PLAN_LIMITS[plan].monthlyRequests;
-  const usage = await db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')").bind(userId).first();
-  if (Number(usage?.requests || 0) >= limit) {
-    const spent = await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
-    if (!Number(spent?.meta?.changes || 0)) {
-      // Avoid turning a successful AI response into an error if concurrent requests exhaust credits.
-    }
+  const daily = await db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')").bind(userId).first();
+  if (Number(daily?.requests || 0) >= DAILY_TOKEN_ALLOWANCE) {
+    // Daily allowance is free and resets at UTC midnight. Admin-granted bonus credits are only spent after it is exhausted.
+    await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
   }
   await db.prepare(
     "INSERT INTO usage_events (id,user_id,module_id,input_characters,image_count) VALUES (?,?,?,?,?)"
@@ -91,12 +92,12 @@ export async function handleUsage(request, env, user) {
     SELECT module_id AS moduleId, COUNT(*) AS requests,
            COALESCE(SUM(image_count),0) AS images
     FROM usage_events
-    WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
+    WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')
     GROUP BY module_id ORDER BY requests DESC
   `).bind(user.id).all();
   return json({
     ...status,
     byModule: grouped.results || [],
-    metering: "One bonus token pays for one AI request after the plan's monthly request limit. Prompt, response, and image contents are not stored in usage_events."
+    metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets automatically at UTC midnight. Prompt, response, and image contents are not stored in usage_events."
   });
 }
