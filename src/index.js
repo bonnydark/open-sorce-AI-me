@@ -229,7 +229,8 @@ export default {
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
                     try {
                       const imageCount = Array.isArray(body.images) ? body.images.length : 0;
-                      const modelId = moduleId === "ai-agent" && imageCount === 0 ? "gort-agentic-readonly"\n                        : moduleId === "gort"
+                      const modelId = moduleId === "ai-agent" && imageCount === 0 ? "gort-agentic-readonly"
+                        : moduleId === "gort"
                         ? (env.GORT_MODEL_NAME || (env.GORT_INFERENCE_URL ? "self-hosted-model" : "@cf/meta/llama-3.3-70b-instruct-fp8-fast"))
                         : moduleId === "code-copilot" && imageCount === 0 ? "@cf/qwen/qwen2.5-coder-32b-instruct"
                         : ["security-analyst", "study-tutor"].includes(moduleId) && imageCount === 0 ? "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
