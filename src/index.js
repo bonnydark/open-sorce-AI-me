@@ -74,7 +74,7 @@ export default {
         let upstreamUrl;
         if (url.pathname === "/api/local-ai/model-lib") {
           const name = url.searchParams.get("name") || "";
-          if (!/^Qwen2\.5-0\.5B-Instruct-q4f16_1_[A-Za-z0-9._-]+\.wasm$/.test(name)) {
+          if (!/^Qwen2-0\.5B-Instruct-q4f16_1_cs1k-webgpu\.wasm$/.test(name)) {
             response = json({ error: "Unsupported Local AI model library." }, 400);
           } else {
             upstreamUrl = "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_84/base/" + name;
