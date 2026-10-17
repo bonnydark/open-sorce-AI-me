@@ -4,7 +4,6 @@ import { generateCodeCopilotReply } from "./modules/code-copilot.js";
 import { generateSpecialistReply } from "./modules/specialists.js";
 import { generateGortReply, getGortMemories, learnGortMemory, handleGortMemories } from "./modules/gort.js";
 import { runAgent } from "./modules/agent.js";
-import { runAgent } from "./modules/agent.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
 import { handleMemories } from "./modules/memories.js";
