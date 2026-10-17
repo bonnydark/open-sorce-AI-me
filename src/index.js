@@ -198,7 +198,7 @@ export default {
         if (url.pathname === "/billing" || url.pathname === "/billing/") {
           const assetUrl = new URL("/billing.html", url.origin);
           assetUrl.search = url.search;
-          return env.ASSETS.fetch(new Request(assetUrl, request));
+          return env.ASSETS.fetch(new Request(assetUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
         }
         if (url.pathname === "/") return env.ASSETS.fetch(request);
         // Serve the chat document explicitly for both canonical and legacy chat URLs.
