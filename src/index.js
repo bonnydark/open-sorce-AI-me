@@ -4,6 +4,7 @@ import { generateCodeCopilotReply } from "./modules/code-copilot.js";
 import { generateSpecialistReply } from "./modules/specialists.js";
 import { generateGortReply, getGortMemories, learnGortMemory, handleGortMemories } from "./modules/gort.js";
 import { runAgent } from "./modules/agent.js";
+import { runAgent } from "./modules/agent.js";
 import { handleChats, createChat, appendMessage, recentContext, ownsConversation } from "./modules/chat-store.js";
 import { handleUserSettings, getUserSettings } from "./modules/user-settings.js";
 import { handleMemories } from "./modules/memories.js";
@@ -186,6 +187,7 @@ export default {
                     const moduleId = ["ai-engine", "ai-agent", "code-copilot", "security-analyst", "study-tutor", "vision-ai", "gort"].includes(body.moduleId) ? body.moduleId : (settings.activeModule || "ai-engine");
                     const moduleProfiles = {
                       "ai-engine": { specialistMode: false, workspaceProfile: "general" },
+                      "ai-agent": { specialistMode: false, workspaceProfile: "general", agentMode: true },
                       "ai-agent": { specialistMode: false, workspaceProfile: "general", agentMode: true },
                       "gort": { specialistMode: true, workspaceProfile: "developer" },
                       "code-copilot": { specialistMode: true, workspaceProfile: "developer" },
