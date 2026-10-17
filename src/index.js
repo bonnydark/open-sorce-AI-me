@@ -253,7 +253,7 @@ export default {
                         : imageCount > 0 ? "@cf/llava-hf/llava-1.5-7b-hf"
                         : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
                       const baseEstimatedCost = configuredUsageCost(env, imageCount);
-                      const estimatedCostUsd = ((moduleId === "ai-agent" && imageCount === 0) || (moduleId === "grot-o1" && moduleSettings.agentMode && imageCount === 0)) && baseEstimatedCost !== null
+                      const estimatedCostUsd = ((moduleId === "ai-agent" && imageCount === 0) || (moduleId === "grot-o1" && agentModelCalls > 1 && imageCount === 0)) && baseEstimatedCost !== null
                         ? baseEstimatedCost * agentModelCalls : baseEstimatedCost;
                       await recordUsage(env.DB, user.id, {
                         moduleId, modelId, inputCharacters: message.length, imageCount, estimatedCostUsd
