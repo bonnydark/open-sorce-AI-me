@@ -68,7 +68,7 @@ export default {
         response = json({ ok: true, service: "gortgpt", ai: Boolean(env.CORE_AI_URL), database: Boolean(env.DB) });
       }
       else if (url.pathname === "/api/local-ai/manifest" && request.method === "GET") {
-        response = json({ ok: true, service: "gortgpt-browser-local-ai", manifestVersion: 1, modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", modelVersion: "qwen25-05b-q4f16-r1", enginePackage: "@mlc-ai/web-llm", engineVersion: "0.2.80", cacheBackend: "indexeddb", updatedAt: "2026-10-17" });
+        response = json({ ok: true, service: "gortgpt-browser-local-ai", manifestVersion: 1, modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", modelVersion: "qwen25-05b-q4f16-r1", enginePackage: "@mlc-ai/web-llm", engineVersion: "0.2.80", cacheBackend: "cache", updatedAt: "2026-10-17" });
       } else if (/^\/api\/shared\/[a-f0-9]{64}\/files\/[a-f0-9-]+\/view$/i.test(url.pathname) && request.method === "GET") {
         response = await getSharedFile(request, env, url);
       } else if (url.pathname === "/api/billing/webhook" && request.method === "POST") {
