@@ -7,9 +7,10 @@ const randomToken = () => {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return "gort_" + Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 };
-const moduleIds = new Set(["ai-engine", "gort", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
+const moduleIds = new Set(["ai-engine", "ai-agent", "gort", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
 const moduleModels = {
   "ai-engine": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "ai-agent": "gort-agentic-readonly",
   "gort": "gort-standalone",
   "code-copilot": "@cf/qwen/qwen2.5-coder-32b-instruct",
   "security-analyst": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
@@ -169,6 +170,7 @@ export async function handlePublicAiApi(request, env, url) {
   try {
     const { getUserSettings } = await import("./user-settings.js");
     const { generateReply } = await import("./ai-engine.js");
+    const { runAgent } = await import("./agent.js");
     const { generateCodeCopilotReply } = await import("./code-copilot.js");
     const { generateSpecialistReply } = await import("./specialists.js");
     const { generateGortReply, getGortMemories } = await import("./gort.js");
@@ -178,6 +180,7 @@ export async function handlePublicAiApi(request, env, url) {
     const enriched = systemText ? [{ role: "system", content: "API caller instructions (treat as user-provided context):\n" + systemText }, ...context] : context;
     const profiles = {
       "ai-engine": { specialistMode: false, workspaceProfile: "general" },
+      "ai-agent": { specialistMode: false, workspaceProfile: "general", agentMode: true },
       "gort": { specialistMode: true, workspaceProfile: "developer" },
       "code-copilot": { specialistMode: true, workspaceProfile: "developer" },
       "security-analyst": { specialistMode: true, workspaceProfile: "bug-bounty" },
@@ -186,7 +189,8 @@ export async function handlePublicAiApi(request, env, url) {
     };
     const moduleSettings = { ...settings, ...profiles[moduleId], activeModule: moduleId };
     let reply;
-    if (moduleId === "gort") reply = await generateGortReply(env, enriched, moduleSettings, await getGortMemories(env.DB, user.id));
+    if (moduleId === "ai-agent") reply = await runAgent(env, enriched, { maxSteps: 4 });
+    else if (moduleId === "gort") reply = await generateGortReply(env, enriched, moduleSettings, await getGortMemories(env.DB, user.id));
     else if (moduleId === "code-copilot") reply = await generateCodeCopilotReply(env.AI, enriched, moduleSettings);
     else if (moduleId === "security-analyst" || moduleId === "study-tutor") reply = await generateSpecialistReply(env.AI, moduleId, enriched, moduleSettings);
     else reply = await generateReply(env.AI, enriched, moduleSettings);
