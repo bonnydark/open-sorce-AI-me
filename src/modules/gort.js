@@ -1,3 +1,4 @@
+import { coreChat } from "./core-ai.js";
 const SYSTEM_PROMPT = `You are Gort, a standalone, multilingual software-building AI module owned by this application.
 You are specialized in writing, reviewing, debugging, refactoring, and explaining code in any programming language. Support languages and formats such as JavaScript, TypeScript, Python, Rust, Go, Java, C/C++, C#, PHP, Ruby, SQL, HTML, CSS, Bash, PowerShell, YAML, JSON, and others.
 When asked to create or edit code: provide complete code, identify filenames, preserve existing requirements, include validation and error handling, explain important trade-offs, and provide tests or run instructions where useful. For revisions, use the prior conversation and the exact requested changes; do not silently replace unrelated functionality.
@@ -23,56 +24,17 @@ export async function learnGortMemory(db, userId, message, enabled) {
 }
 
 export async function generateGortReply(env, conversation, settings = {}, memories = []) {
-  const endpoint = typeof env.GORT_INFERENCE_URL === "string" ? env.GORT_INFERENCE_URL.trim() : "";
-  if (!endpoint) {
-    // Use the project's existing Cloudflare Workers AI binding by default.
-    // Gort remains a separate module with its own prompt and memory; a
-    // self-hosted OpenAI-compatible endpoint is optional, not mandatory.
-    if (!env.AI) {
-      throw new Error("Gort inference is not configured: Cloudflare Workers AI binding AI is missing, and GORT_INFERENCE_URL is not set.");
-    }
-    const messages = Array.isArray(conversation)
-      ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string").slice(-40)
-      : [];
-    const memoryText = memories.length
-      ? "\n\nGORT'S PRIVATE USER MEMORY (account-scoped, editable/deletable separately):\n" + memories.map(item => "- " + item.content).join("\n")
-      : "";
-    const result = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-      messages: [{ role: "system", content: SYSTEM_PROMPT + memoryText }, ...messages],
-      max_tokens: 2048
-    });
-    const answer = result?.response ?? result?.choices?.[0]?.message?.content ?? result?.output_text;
-    if (typeof answer !== "string" || !answer.trim()) {
-      throw new Error("Cloudflare Workers AI returned an empty Gort response.");
-    }
-    return answer.trim();
-  }
-  let url;
-  try { url = new URL(endpoint); } catch { throw new Error("GORT_INFERENCE_URL must be a valid HTTPS URL."); }
-  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") throw new Error("GORT_INFERENCE_URL must use HTTPS outside localhost.");
-  const messages = Array.isArray(conversation) ? conversation.filter(item => item && ["system","user","assistant"].includes(item.role) && typeof item.content === "string").slice(-40) : [];
-  const memoryText = memories.length ? "\n\nGORT'S PRIVATE USER MEMORY (account-scoped, editable/deletable separately):\n" + memories.map(item => "- " + item.content).join("\n") : "";
-  const system = SYSTEM_PROMPT + memoryText;
-  const apiUrl = /\/v1\/chat\/completions\/?$/.test(url.pathname) ? url : new URL(url.pathname.replace(/\/$/, "") + (url.pathname.replace(/\/$/, "").endsWith("/v1") ? "/chat/completions" : "/v1/chat/completions"), url.origin);
-  const headers = { "content-type": "application/json", "accept": "application/json" };
-  if (typeof env.GORT_INFERENCE_TOKEN === "string" && env.GORT_INFERENCE_TOKEN) headers.authorization = "Bearer " + env.GORT_INFERENCE_TOKEN;
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: typeof env.GORT_MODEL_NAME === "string" && env.GORT_MODEL_NAME.trim() ? env.GORT_MODEL_NAME.trim() : "local-model",
-      messages: [{ role: "system", content: system }, ...messages],
-      temperature: 0.4,
-      max_tokens: 4096,
-      stream: false
-    }),
-    signal: AbortSignal.timeout(90000)
-  });
-  if (!response.ok) throw new Error("Self-hosted Gort inference server returned HTTP " + response.status + ".");
-  const data = await response.json();
-  const answer = data?.choices?.[0]?.message?.content ?? data?.response ?? data?.output_text;
-  if (typeof answer !== "string" || !answer.trim()) throw new Error("Self-hosted Gort inference server returned an empty response.");
-  return answer.trim();
+  const messages = Array.isArray(conversation)
+    ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string").slice(-40)
+    : [];
+  const memoryText = memories.length
+    ? "\\n\\nGORT PRIVATE ACCOUNT MEMORY (use only when relevant):\\n" + memories.map(item => "- " + item.content).join("\\n")
+    : "";
+  const detail = ({ concise: "Be concise but include complete fixes.", balanced: "Use balanced explanations and practical steps.", detailed: "Explain thoroughly with examples and tests." })[settings.answerStyle] || "Use balanced explanations and practical steps.";
+  return coreChat(env, [
+    { role: "system", content: SYSTEM_PROMPT + memoryText + "\\nResponse style: " + detail },
+    ...messages
+  ], { max_tokens: 4096 });
 }
 
 export async function handleGortMemories(request, env, user, url) {
