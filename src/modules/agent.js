@@ -107,5 +107,14 @@ export async function runAgent(env, conversation, options = {}) {
   }
   const planText = plan.length ? "**Agent plan**\n"+plan.map((item,i)=>(i+1)+". "+item).join("\n")+"\n\n" : "";
   const actionText = transcript.length ? "**Actions completed**\n"+transcript.map((item,i)=>(i+1)+". "+item.split("\n")[0]).join("\n")+"\n\n" : "";
-  const uniqueDomains = new Set(sources.map(source => source.domain).filter(Boolean));\n  const sourceText = sources.length ? "\\n\\n**Sources**\\n" + sources.slice(0,8).map((source,index) => (index+1)+". ["+source.title.replace(/\\]/g, "")+"]("+source.url+")" + (source.domain ? " — "+source.domain : "")).join("\\n") : "";\n  const crossCheckNote = sources.length >= 2 && uniqueDomains.size >= 2 ? "" : sources.length ? "\\n\\n*Source coverage is limited; independent cross-checking was not fully possible.*" : "";\n  return { reply:planText+actionText+finalAnswer+sourceText+crossCheckNote, modelCalls, toolCalls:completedTools, sourceCount:sources.length };
+  const uniqueDomains = new Set(sources.map(source => source.domain).filter(Boolean));
+  const sourceText = sources.length
+    ? "\n\n**Sources**\n" + sources.slice(0, 8).map((source, index) => (index + 1) + ". [" + source.title.replace(/\]/g, "") + "](" + source.url + ")" + (source.domain ? " — " + source.domain : "")).join("\n")
+    : "";
+  const crossCheckNote = sources.length >= 2 && uniqueDomains.size >= 2
+    ? ""
+    : sources.length
+      ? "\n\n*Source coverage is limited; independent cross-checking was not fully possible.*"
+      : "";
+  return { reply: planText + actionText + finalAnswer + sourceText + crossCheckNote, modelCalls, toolCalls: completedTools, sourceCount: sources.length };
 }
