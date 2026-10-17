@@ -537,7 +537,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
   try {
     const data = await api('/api/usage');
     const used = Math.max(0, Number(data.monthlyRequests ?? data.requests ?? 0));
-    const allowance = Math.max(1, Number(data.monthlyLimit || 100));
+    const allowance = Math.max(1, Number(data.monthlyLimit || 3000));
     const remaining = Math.max(0, Number(data.monthlyRemaining ?? (allowance - used)));
     const pct = Math.min(100, Math.round(used / allowance * 100));
     count.textContent = used.toLocaleString() + ' / ' + allowance.toLocaleString() + ' requests this month · ' + (data.planLabel || 'Free');
