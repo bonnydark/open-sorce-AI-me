@@ -443,7 +443,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
 <section class="settingsgate hidden" id="researchGate" aria-modal="true" role="dialog" aria-labelledby="researchTitle"><div class="settingscard" style="width:min(850px,100%)"><div class="settingshead"><div><div class="eyebrow">Current information</div><h2 id="researchTitle">Live Web Research</h2></div><button class="closebtn" id="closeResearch" type="button">✕ Close</button></div><p class="sub" id="researchDescription">Searches the web through a configured Brave Search API key. Results include source links; verify important claims against the original pages.</p><form id="researchForm" style="display:flex;gap:8px;flex-wrap:wrap;margin:15px 0"><input id="researchQuery" maxlength="300" required placeholder="Search for current information…" style="flex:1;min-width:200px;background:#080808;color:var(--text);border:1px solid #452328;border-radius:9px;padding:12px;font:inherit"><button class="saveSettings" id="researchSubmit" type="submit">Search web</button></form><div id="researchStatus" class="settingstatus"></div><div id="researchResults" style="display:grid;gap:9px;margin-top:12px"></div></div></section>
 <section class="image-viewer hidden" id="imageViewer" role="dialog" aria-modal="true" aria-label="Image preview"><button id="closeImageViewer" type="button">✕ Close image</button><img id="imageViewerImage" alt="Full-size image preview"></section>
 <section class="settingsgate hidden" id="settingsGate" aria-modal="true" role="dialog" aria-labelledby="settingsTitle"><div class="settingscard"><div class="settingshead"><div><div class="eyebrow">Personal AI configuration</div><h2 id="settingsTitle">Settings & task controls</h2></div><button class="closebtn" id="closeSettings" type="button">✕ Close</button></div>
-<section class="quota-card" id="usageQuotaCard" aria-live="polite"><div class="quota-top"><div><div class="eyebrow">DAILY AI USAGE</div><strong id="quotaCount">Loading usage…</strong></div><span class="quota-badge" id="quotaPercent">—</span></div><div class="quota-track" role="progressbar" aria-label="Daily AI requests used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="quotaProgress"><div class="quota-fill" id="quotaFill"></div></div><div class="quota-bottom"><span id="quotaRemaining">Checking your allowance…</span><span id="quotaBonus">Bonus credits: —</span></div><p class="quota-note" id="quotaReset">100 AI requests refresh daily at 07:00 Vietnam time.</p><p class="quota-note">Estimated AI cost this month <strong id="quotaCost">Checking…</strong></p><p class="quota-note">Cost is an estimate, not a bill.</p></section>
+<section class="quota-card" id="usageQuotaCard" aria-live="polite"><div class="quota-top"><div><div class="eyebrow">MONTHLY AI USAGE</div><strong id="quotaCount">Loading usage…</strong></div><span class="quota-badge" id="quotaPercent">—</span></div><div class="quota-track" role="progressbar" aria-label="Monthly AI requests used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="quotaProgress"><div class="quota-fill" id="quotaFill"></div></div><div class="quota-bottom"><span id="quotaRemaining">Checking your allowance…</span><span id="quotaBonus">Bonus credits: —</span></div><p class="quota-note" id="quotaReset">Monthly plan allowance resets at the start of each UTC month.</p><p class="quota-note">Estimated AI cost this month <strong id="quotaCost">Checking…</strong></p><p class="quota-note">Cost is an estimate, not a bill.</p></section>
 <details class="taskgroup" open><summary>01 · AI personality & answers</summary>
 <div class="settingrow"><div><label for="settingPersonality">Personality</label><small>Choose how the AI speaks, not what facts it is allowed to invent.</small></div><select id="settingPersonality"><option value="serious">Serious / professional</option><option value="casual">Casual / friendly</option><option value="classic">Classic / balanced</option><option value="playful">Playful / witty</option><option value="custom">Custom style</option></select></div>
 <div class="settingrow"><div><label for="settingHumor">Humor level</label><small>Independent control for jokes and playful phrasing.</small></div><select id="settingHumor"><option value="off">Off</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
@@ -536,17 +536,17 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
   const count = $('quotaCount');
   try {
     const data = await api('/api/usage');
-    const used = Math.max(0, Number(data.dailyRequests || 0));
-    const allowance = Math.max(1, Number(data.dailyAllowance || 100));
-    const remaining = Math.max(0, allowance - used);
+    const used = Math.max(0, Number(data.monthlyRequests ?? data.requests ?? 0));
+    const allowance = Math.max(1, Number(data.monthlyLimit || 100));
+    const remaining = Math.max(0, Number(data.monthlyRemaining ?? (allowance - used)));
     const pct = Math.min(100, Math.round(used / allowance * 100));
-    count.textContent = used + ' / ' + allowance + ' requests today';
+    count.textContent = used.toLocaleString() + ' / ' + allowance.toLocaleString() + ' requests this month · ' + (data.planLabel || 'Free');
     $('quotaPercent').textContent = pct + '% used';
     $('quotaFill').style.width = pct + '%';
     $('quotaProgress').setAttribute('aria-valuenow', String(pct));
-    $('quotaRemaining').textContent = remaining + ' free ' + (remaining === 1 ? 'request' : 'requests') + ' left today';
+    $('quotaRemaining').textContent = remaining.toLocaleString() + ' plan ' + (remaining === 1 ? 'request' : 'requests') + ' left this month';
     $('quotaBonus').textContent = 'Bonus credits: ' + Math.max(0, Number(data.tokenBalance || 0));
-    $('quotaReset').textContent = 'Resets daily at 00:00 UTC · 07:00 Vietnam time. ' + (remaining === 0 ? 'Daily free allowance used; bonus credits can cover more requests.' : '');
+    $('quotaReset').textContent = 'Resets at the start of each UTC month. ' + (remaining === 0 ? 'Monthly plan allowance used; bonus credits can cover more requests.' : 'API tokens also have separate per-token daily limits.');
     $('quotaCost').textContent = data.costRatesConfigured ? '$' + Number(data.estimatedCostUsd || 0).toFixed(4) + ' USD' : 'Not configured';
   } catch (error) {
     count.textContent = 'Usage unavailable';
