@@ -80,7 +80,7 @@ export async function handleBilling(request, env, user, url) {
     const plan = plans[row?.plan] ? row.plan : "free";
     return json({
       plan, planLabel: plans[plan]?.label || "Free",
-      monthlyRequests: plan === "free" ? 100 : plans[plan].requests,
+      monthlyRequests: plan === "free" ? 3000 : plans[plan].requests,
       subscriptionStatus: row?.stripe_subscription_status || "none",
       currentPeriodEnd: row?.stripe_current_period_end || null,
       canManageSubscription: Boolean(row?.stripe_customer_id),
