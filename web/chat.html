@@ -716,6 +716,8 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
     }
     transformers.env.allowLocalModels=false;
     transformers.env.useBrowserCache=true;
+    transformers.env.remoteHost=new URL('/api/local-ai/cpu-model/',location.origin).href.replace(/\\/$/,'');
+    transformers.env.remotePathTemplate='{model}/resolve/{revision}/';
     const generator=await transformers.pipeline('text-generation','onnx-community/Qwen2.5-0.5B-Instruct',{device:'wasm',dtype:'q4',progress_callback:report=>{
      if(report?.status==='progress')setLocalAiStatus('Downloading CPU model '+(report.file||'')+' '+Math.round((report.progress||0)*100)+'%');
      else if(report?.status==='initiate')setLocalAiStatus('Preparing CPU model file '+(report.file||'')+'…');
