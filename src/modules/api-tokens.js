@@ -165,7 +165,7 @@ export async function handlePublicAiApi(request, env, url) {
   }
   const { checkPlanQuota, recordUsage } = await import("./usage.js");
   const quota = await checkPlanQuota(env.DB, user.id);
-  if (!quota.allowed) return json({ error: { message: "Daily AI allowance used up. Wait until 07:00 Vietnam time or add bonus credits.", type: "rate_limit_error", code: "DAILY_LIMIT_REACHED" } }, 429);
+  if (!quota.allowed) return json({ error: { message: "Monthly plan allowance used up. Upgrade your plan or add bonus credits; the allowance resets at the start of the next UTC month.", type: "rate_limit_error", code: "MONTHLY_LIMIT_REACHED" } }, 429);
   try {
     const { getUserSettings } = await import("./user-settings.js");
     const { generateReply } = await import("./ai-engine.js");
