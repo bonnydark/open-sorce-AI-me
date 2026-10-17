@@ -9,10 +9,7 @@ export async function handleImageGeneration(request, env, user) {
   if (!prompt) return json({ error: "Describe the image you want to create." }, 400);
   if (prompt.length > 1500) return json({ error: "Image prompt must be 1,500 characters or fewer." }, 413);
   try {
-    const result = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
-      prompt,
-      num_steps: 4
-    });
+    const result = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt });
     let image = result?.image;
     if (image instanceof ArrayBuffer) image = btoa(String.fromCharCode(...new Uint8Array(image)));
     else if (image instanceof Uint8Array) {
