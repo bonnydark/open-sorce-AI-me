@@ -16,6 +16,7 @@ import { handleResearchSearch, searchWeb } from "./modules/research.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 import { handleBilling, handleStripeWebhook } from "./modules/billing.js";
 import { handleAdminApi, isAdminUser } from "./modules/admin.js";
+import { handleApiTokens, handlePublicAiApi } from "./modules/api-tokens.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -50,6 +51,7 @@ export default {
     const url = new URL(request.url);
     const cors = corsHeaders(request);
     if (request.method === "OPTIONS" && isApi(url.pathname)) return new Response(null, { status: 204, headers: cors });
+    if (request.method === "OPTIONS" && url.pathname.startsWith("/v1/")) return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Authorization,Content-Type", "Access-Control-Max-Age": "86400" } });
     try {
       let response;
       if (url.pathname === "/api/health" && request.method === "GET") {
@@ -60,6 +62,8 @@ export default {
         response = await handleStripeWebhook(request, env);
       } else if (url.pathname.startsWith("/api/shared/") && request.method === "GET") {
         response = await getSharedChat(request, env, url);
+      } else if (url.pathname.startsWith("/v1/")) {
+        response = await handlePublicAiApi(request, env, url);
       } else if (url.pathname.startsWith("/api/auth/")) {
         response = await handleAuth(request, env, url);
       } else if (url.pathname.startsWith("/api/")) {
