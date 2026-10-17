@@ -69,6 +69,34 @@ export default {
       }
       else if (url.pathname === "/api/local-ai/manifest" && request.method === "GET") {
         response = json({ ok: true, service: "gortgpt-browser-local-ai", manifestVersion: 1, modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", modelVersion: "qwen25-05b-q4f16-r1", enginePackage: "@mlc-ai/web-llm", engineVersion: "0.2.80", cacheBackend: "cache", updatedAt: "2026-10-17" });
+      }
+      else if ((url.pathname.startsWith("/api/local-ai/model/") || url.pathname === "/api/local-ai/model-lib") && (request.method === "GET" || request.method === "HEAD")) {
+        let upstreamUrl;
+        if (url.pathname === "/api/local-ai/model-lib") {
+          const name = url.searchParams.get("name") || "";
+          if (!/^Qwen2\\.5-0\\.5B-Instruct-q4f16_1_[A-Za-z0-9._-]+\\.wasm$/.test(name)) {
+            response = json({ error: "Unsupported Local AI model library." }, 400);
+          } else {
+            upstreamUrl = "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/base/" + name;
+          }
+        } else {
+          const match = url.pathname.match(/^\\/api\\/local-ai\\/model\\/resolve\\/main\\/([A-Za-z0-9._-]+)$/);
+          if (!match || match[1].includes("..")) {
+            response = json({ error: "Unsupported Local AI model asset." }, 400);
+          } else {
+            upstreamUrl = "https://huggingface.co/mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC/resolve/main/" + match[1];
+          }
+        }
+        if (upstreamUrl) {
+          const headers = new Headers();
+          const range = request.headers.get("Range");
+          if (range) headers.set("Range", range);
+          const upstream = await fetch(upstreamUrl, { method: request.method, headers, redirect: "follow" });
+          const outHeaders = new Headers(upstream.headers);
+          outHeaders.set("Cache-Control", "public, max-age=86400");
+          outHeaders.delete("Set-Cookie");
+          response = new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: outHeaders });
+        }
       } else if (/^\/api\/shared\/[a-f0-9]{64}\/files\/[a-f0-9-]+\/view$/i.test(url.pathname) && request.method === "GET") {
         response = await getSharedFile(request, env, url);
       } else if (url.pathname === "/api/billing/webhook" && request.method === "POST") {
