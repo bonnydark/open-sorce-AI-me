@@ -726,7 +726,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
      const generated=result?.[0]?.generated_text;
      const content=typeof generated==='string'?generated:Array.isArray(generated)?generated.filter(item=>item.role==='assistant').map(item=>item.content).join('\n'):String(generated||'');
      return {choices:[{message:{content:content.trim()}}]};
-    }}};
+    }}}};
     localAiStage='ready';localAiEnabled=true;
     if(localAiButton){localAiButton.textContent='⚡ Local AI: ON (CPU)';localAiButton.classList.add('local-ai-active')}
     setLocalAiStatus('CPU/WASM Local AI is ready on this device. It works without WebGPU, but responses may be slower. The browser may cache downloaded model files for future visits.');
