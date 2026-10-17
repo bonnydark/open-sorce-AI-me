@@ -7,6 +7,29 @@ const MODELS = {
 };
 const VISION_MODEL = "@cf/llava-hf/llava-1.5-7b-hf";
 
+// Keep requests comfortably below smaller Workers AI context windows. This is a
+// character budget rather than an exact tokenizer, so leave room for tokenization
+// overhead, role wrappers, and model-specific formatting.
+function fitConversation(messages, maxChars = 2800) {
+  const selected = [];
+  let remaining = maxChars;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const item = messages[i];
+    const content = typeof item.content === "string" ? item.content : "";
+    const prefix = item.role + ": ";
+    if (remaining <= prefix.length) break;
+    const allowance = remaining - prefix.length;
+    const clipped = content.length > allowance
+      ? (i === messages.length - 1 ? content.slice(-allowance) : content.slice(-allowance))
+      : content;
+    selected.unshift({ role: item.role, content: clipped });
+    remaining -= prefix.length + clipped.length + 8;
+    if (remaining <= 0) break;
+  }
+  return selected;
+}
+
+
 const SYSTEM_PROMPT = `You are GortGPT, a helpful multilingual assistant inside a private chat workspace.
 
 CONVERSATION CONTINUITY
@@ -93,13 +116,14 @@ When the user asks which mode/support they are currently using (for example, "wh
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string")
     : [];
   const visionInstruction = settings.visionMode ? "\n\nVISION AI MODE: You specialize in understanding images, screenshots, diagrams, documents, and visual debugging. Describe only details supported by the image; state uncertainty clearly." : "";
-  const systemMessage = { role: "system", content: SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nPersonality: " + personality + "\n\nHumor preference: " + humor + "\n\nCustom style: " + customStyle + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile + visionInstruction };
+  const systemContent = (SYSTEM_PROMPT + "\\n\\n" + activeModeContext + "\\n\\nPersonality: " + personality + "\\n\\nHumor preference: " + humor + "\\n\\nCustom style: " + customStyle + "\\n\\nUser response preference: " + style + "\\n\\nWorkspace profile: " + profile + visionInstruction).slice(0, 4200);
+  const systemMessage = { role: "system", content: systemContent };
   const imageData = Array.isArray(images) ? images.filter(image => typeof image === "string" && /^data:image\/(png|jpeg|webp|gif|bmp|avif);base64,/i.test(image)).slice(0, 3) : [];
   let result;
   if (imageData.length) {
     // LLaVA accepts raw image bytes and a text prompt, and does not use the gated
     // Meta Llama 3.2 Vision model that requires a one-time license agreement.
-    const transcript = messages.slice(-16).map(item => {
+    const transcript = fitConversation(messages.slice(-16), 1800).map(item => {
       const content = typeof item.content === "string" ? item.content : "";
       return (item.role || "user").toUpperCase() + ": " + content;
     }).join("\n\n");
@@ -130,7 +154,7 @@ When the user asks which mode/support they are currently using (for example, "wh
   } else {
     const model = MODELS[settings.activeModule] || MODELS["ai-engine"];
     result = await aiBinding.run(model, {
-      messages: [systemMessage, ...messages],
+      messages: [systemMessage, ...fitConversation(messages, 2800)],
       max_tokens: messages.some(item => item.role === "user" && item.content.includes("FILE EDIT TASK")) ? 4096 : 1024
     });
   }
