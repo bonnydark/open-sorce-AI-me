@@ -123,18 +123,23 @@ When the user asks which mode/support they are currently using (for example, "wh
   if (imageData.length) {
     // LLaVA accepts raw image bytes and a text prompt, and does not use the gated
     // Meta Llama 3.2 Vision model that requires a one-time license agreement.
-    const transcript = fitConversation(messages.slice(-16), 1800).map(item => {
+    // Vision models have a smaller prompt context than the main chat model.
+    // Do not send the full system prompt or the entire conversation to LLaVA.
+    const recentMessages = fitConversation(messages.filter(item => item.role !== "system").slice(-4), 900);
+    const transcript = recentMessages.map(item => {
       const content = typeof item.content === "string" ? item.content : "";
       return (item.role || "user").toUpperCase() + ": " + content;
-    }).join("\n\n");
+    }).join("\n");
+    const latestUserRequest = (messages.filter(item => item.role === "user").slice(-1)[0]?.content || "Describe the image.")
+      .replace(/\\[\\[OSAI_IMAGE:[^\\]]+\\]\\]/g, "[attached image]")
+      .replace(/IMAGE ATTACHED: [^\\n]+/g, "")
+      .slice(-700);
     const visionPrompt = [
-      SYSTEM_PROMPT,
-      "IMAGE INPUT IS PROVIDED TO YOU: inspect the supplied image bytes directly. Do not claim you cannot view or access an image when image input is present. Answer the user's actual question using visible evidence; if a specific detail is too small, obscured, or unreadable, say exactly which detail is uncertain instead of refusing the whole task.",
-      settings.visionMode ? "You are Vision AI. Carefully inspect attached images, answer the user's question about them, and separate visible evidence from guesses." : "Analyze the attached image as part of the user's current question.",
-      "Conversation context (latest first is not required):",
-      transcript,
-      "User request: " + (messages.filter(item => item.role === "user").slice(-1)[0]?.content || "Describe and analyze the attached image.")
-    ].filter(Boolean).join("\n\n");
+      "You are a multilingual visual assistant. Analyze the image bytes provided with this request and answer the user's question in the same language as the latest user message.",
+      "Be specific and grounded in visible evidence. If text is present, read it only when legible. State uncertainty about unclear details. Never claim you cannot see the image when image bytes are provided.",
+      transcript ? "Recent context:\\n" + transcript : "",
+      "Current user request: " + latestUserRequest
+    ].filter(Boolean).join("\\n\\n").slice(0, 2600);
     const descriptions = [];
     for (const imageUrl of imageData) {
       const match = imageUrl.match(/^data:image\/(?:png|jpeg|webp|gif|bmp|avif);base64,([\s\S]+)$/i);
