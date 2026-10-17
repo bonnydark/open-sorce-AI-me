@@ -7,8 +7,9 @@ const randomToken = () => {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return "gort_" + Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 };
-const moduleIds = new Set(["ai-engine", "ai-agent", "gort", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
+const moduleIds = new Set(["grot-o1", "ai-engine", "ai-agent", "gort", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
 const moduleModels = {
+  "grot-o1": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "ai-engine": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "ai-agent": "gort-agentic-readonly",
   "gort": "gort-standalone",
