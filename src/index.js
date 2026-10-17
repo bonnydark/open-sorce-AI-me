@@ -19,6 +19,14 @@ import { handleAdminApi, isAdminUser } from "./modules/admin.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
+function configuredUsageCost(env, imageCount) {
+  const requestRate = Number(env.AI_ESTIMATED_COST_PER_REQUEST_USD);
+  const imageRate = Number(env.AI_ESTIMATED_COST_PER_IMAGE_USD);
+  const hasRequestRate = env.AI_ESTIMATED_COST_PER_REQUEST_USD !== undefined && env.AI_ESTIMATED_COST_PER_REQUEST_USD !== "" && Number.isFinite(requestRate) && requestRate >= 0;
+  const hasImageRate = env.AI_ESTIMATED_COST_PER_IMAGE_USD !== undefined && env.AI_ESTIMATED_COST_PER_IMAGE_USD !== "" && Number.isFinite(imageRate) && imageRate >= 0;
+  if (!hasRequestRate && !hasImageRate) return null;
+  return (hasRequestRate ? requestRate : 0) + (hasImageRate ? imageRate * imageCount : 0);
+}
 function corsHeaders(request) {
   const origin = request.headers.get("Origin");
   const headers = new Headers({ "Vary": "Origin" });
@@ -62,7 +70,7 @@ export default {
           } else if (url.pathname.startsWith("/api/billing/")) {
             response = await handleBilling(request, env, user, url);
           } else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
-            response = json({ error: "Monthly AI request limit reached. Your usage resets at the start of next month.", code: "PLAN_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
+            response = json({ error: "Daily AI allowance used up. Wait until 07:00 Vietnam time for the reset, or use bonus credits if available.", code: "DAILY_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
           } else if (url.pathname.startsWith("/api/integrations/github/")) {
             response = await handleGitHubWorkspace(request, env, user, url);
           } else if (url.pathname === "/api/osint") {
@@ -186,7 +194,19 @@ export default {
                       reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     }
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
-                    try { await recordUsage(env.DB, user.id, { moduleId, inputCharacters: message.length, imageCount: Array.isArray(body.images) ? body.images.length : 0 }); } catch (usageError) { /* Metering must never turn a successful AI reply into a failed chat. */ }
+                    try {
+                      const imageCount = Array.isArray(body.images) ? body.images.length : 0;
+                      const modelId = moduleId === "gort"
+                        ? (env.GORT_MODEL_NAME || (env.GORT_INFERENCE_URL ? "self-hosted-model" : "@cf/meta/llama-3.3-70b-instruct-fp8-fast"))
+                        : moduleId === "code-copilot" && imageCount === 0 ? "@cf/qwen/qwen2.5-coder-32b-instruct"
+                        : ["security-analyst", "study-tutor"].includes(moduleId) && imageCount === 0 ? "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+                        : imageCount > 0 ? "@cf/llava-hf/llava-1.5-7b-hf"
+                        : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+                      await recordUsage(env.DB, user.id, {
+                        moduleId, modelId, inputCharacters: message.length, imageCount,
+                        estimatedCostUsd: configuredUsageCost(env, imageCount)
+                      });
+                    } catch (usageError) { /* Metering must never turn a successful AI reply into a failed chat. */ }
                     response = json({ reply, conversationId, title: chat.title, moduleId });
                   } catch (error) {
                     response = json({ error: "AI engine error: " + String(error?.message || error).slice(0, 240), conversationId }, 502);
