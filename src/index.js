@@ -97,6 +97,22 @@ export default {
           outHeaders.delete("Set-Cookie");
           response = new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: outHeaders });
         }
+      } else if (url.pathname.startsWith("/api/local-ai/cpu-model/") && (request.method === "GET" || request.method === "HEAD")) {
+        const assetPath = url.pathname.slice("/api/local-ai/cpu-model/".length);
+        const allowedPrefix = "onnx-community/Qwen2.5-0.5B-Instruct/resolve/main/";
+        if (!assetPath.startsWith(allowedPrefix) || assetPath.includes("..") || !/^[A-Za-z0-9._/-]+$/.test(assetPath)) {
+          response = json({ error: "Unsupported CPU Local AI model asset." }, 400);
+        } else {
+          const upstreamUrl = "https://huggingface.co/" + assetPath;
+          const headers = new Headers();
+          const range = request.headers.get("Range");
+          if (range) headers.set("Range", range);
+          const upstream = await fetch(upstreamUrl, { method: request.method, headers, redirect: "follow" });
+          const outHeaders = new Headers(upstream.headers);
+          outHeaders.set("Cache-Control", "public, max-age=86400");
+          outHeaders.delete("Set-Cookie");
+          response = new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: outHeaders });
+        }
       } else if (/^\/api\/shared\/[a-f0-9]{64}\/files\/[a-f0-9-]+\/view$/i.test(url.pathname) && request.method === "GET") {
         response = await getSharedFile(request, env, url);
       } else if (url.pathname === "/api/billing/webhook" && request.method === "POST") {
