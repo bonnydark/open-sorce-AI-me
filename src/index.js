@@ -14,6 +14,7 @@ import { handleSecurity } from "./modules/security.js";
 import { handleUsage, recordUsage, checkPlanQuota } from "./modules/usage.js";
 import { handleResearchSearch, searchWeb } from "./modules/research.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
+import { handleBilling, handleStripeWebhook } from "./modules/billing.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -44,6 +45,8 @@ export default {
         response = json({ ok: true, service: "gortgpt", ai: Boolean(env.AI), database: Boolean(env.DB) });
       } else if (/^\/api\/shared\/[a-f0-9]{64}\/files\/[a-f0-9-]+\/view$/i.test(url.pathname) && request.method === "GET") {
         response = await getSharedFile(request, env, url);
+      } else if (url.pathname === "/api/billing/webhook" && request.method === "POST") {
+        response = await handleStripeWebhook(request, env);
       } else if (url.pathname.startsWith("/api/shared/") && request.method === "GET") {
         response = await getSharedChat(request, env, url);
       } else if (url.pathname.startsWith("/api/auth/")) {
@@ -53,7 +56,9 @@ export default {
         else {
           const user = await getSessionUser(request, env);
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
-          else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
+          else if (url.pathname.startsWith("/api/billing/")) {
+            response = await handleBilling(request, env, user, url);
+          } else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
             response = json({ error: "Monthly AI request limit reached. Your usage resets at the start of next month.", code: "PLAN_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
           } else if (url.pathname.startsWith("/api/integrations/github/")) {
             response = await handleGitHubWorkspace(request, env, user, url);
@@ -190,6 +195,11 @@ export default {
         }
       } else {
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
+        if (url.pathname === "/billing" || url.pathname === "/billing/") {
+          const assetUrl = new URL("/billing.html", url.origin);
+          assetUrl.search = url.search;
+          return env.ASSETS.fetch(new Request(assetUrl, request));
+        }
         if (url.pathname === "/") return env.ASSETS.fetch(request);
         // Serve the chat document explicitly for both canonical and legacy chat URLs.
         // Do not depend on the static-assets SPA fallback for application routing.
