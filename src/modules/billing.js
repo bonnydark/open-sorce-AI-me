@@ -29,16 +29,17 @@ function safeEqual(a, b) {
 }
 async function verifyStripeSignature(rawBody, header, secret) {
   if (!header || !secret) return false;
-  const parts = Object.fromEntries(header.split(",").map(part => {
+  const parts = header.split(",").map(part => {
     const i = part.indexOf("=");
     return i > 0 ? [part.slice(0, i), part.slice(i + 1)] : ["", ""];
-  }).filter(([k]) => k));
-  const timestamp = Number(parts.t);
-  if (!Number.isFinite(timestamp) || Math.abs(Date.now() / 1000 - timestamp) > 300 || !parts.v1) return false;
+  });
+  const timestamp = Number(parts.find(([key]) => key === "t")?.[1]);
+  const signatures = parts.filter(([key]) => key === "v1").map(([, value]) => value);
+  if (!Number.isFinite(timestamp) || Math.abs(Date.now() / 1000 - timestamp) > 300 || !signatures.length) return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(String(timestamp) + "." + rawBody));
   const expected = [...new Uint8Array(signature)].map(byte => byte.toString(16).padStart(2, "0")).join("");
-  return parts.v1.split(";").some(value => safeEqual(value, expected));
+  return signatures.some(value => safeEqual(value, expected));
 }
 async function setUserSubscription(db, userId, { plan, customerId, subscriptionId, status, periodEnd }) {
   const paid = (status === "active" || status === "trialing") && plans[plan];
@@ -95,8 +96,9 @@ export async function handleBilling(request, env, user, url) {
     if (!plans[plan]) return json({ error: "Choose a valid paid plan." }, 400);
     const priceId = env[plans[plan].priceEnv];
     if (!priceId) return json({ error: "Missing Worker secret " + plans[plan].priceEnv + ". Create a recurring monthly Price in Stripe and add its price ID as a Worker variable/secret." }, 503);
-    const account = await env.DB.prepare("SELECT email,display_name,stripe_customer_id FROM users WHERE id=?").bind(user.id).first();
+    const account = await env.DB.prepare("SELECT email,display_name,stripe_customer_id,plan,stripe_subscription_status FROM users WHERE id=?").bind(user.id).first();
     if (!account) return json({ error: "Account not found." }, 404);
+    if (["active","trialing"].includes(account.stripe_subscription_status) && account.plan !== "free") return json({ error: "An active subscription is already linked to this account. Use Manage subscription to change or cancel it." }, 409);
     const origin = new URL(request.url).origin;
     const params = new URLSearchParams();
     params.set("mode", "subscription");
