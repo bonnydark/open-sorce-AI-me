@@ -73,13 +73,16 @@ export async function handleBilling(request, env, user, url) {
   if (path === "/api/billing/status" && request.method === "GET") {
     let row;
     try {
-      row = await env.DB.prepare("SELECT plan,plan_updated_at,stripe_customer_id,stripe_subscription_id,stripe_subscription_status,stripe_current_period_end FROM users WHERE id=?").bind(user.id).first();
+      row = await env.DB.prepare(`SELECT u.plan,u.plan_updated_at,u.stripe_customer_id,u.stripe_subscription_id,u.stripe_subscription_status,u.stripe_current_period_end,
+        (SELECT o.plan FROM business_team_memberships m JOIN users o ON o.id=m.owner_user_id WHERE m.member_user_id=u.id AND m.status='active' LIMIT 1) AS team_owner_plan
+      FROM users u WHERE u.id=?`).bind(user.id).first();
     } catch {
       return json({ error: "Billing database migration is pending. Apply migrations before using billing." }, 503);
     }
-    const plan = plans[row?.plan] ? row.plan : "free";
+    const plan = row?.team_owner_plan === "business" ? "business" : (plans[row?.plan] ? row.plan : "free");
     return json({
-      plan, planLabel: plans[plan]?.label || "Free",
+      plan, planLabel: row?.team_owner_plan === "business" ? "Business (add)" : plan === "business" ? "Business (main)" : (plans[plan]?.label || "Free"),
+      businessRole: row?.team_owner_plan === "business" ? "business(add)" : plan === "business" ? "business(main)" : null,
       monthlyRequests: plan === "free" ? 3000 : plans[plan].requests,
       subscriptionStatus: row?.stripe_subscription_status || "none",
       currentPeriodEnd: row?.stripe_current_period_end || null,
