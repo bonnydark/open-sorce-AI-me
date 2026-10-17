@@ -705,7 +705,33 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
    let gpuAdapter=null;
    try{gpuAdapter=await navigator.gpu.requestAdapter()}
    catch(adapterError){throw new Error('The browser could not initialize WebGPU. Turn on graphics acceleration, restart the browser, and check the GPU driver. '+(adapterError?.message||''))}
-   if(!gpuAdapter)throw new Error('No compatible WebGPU adapter was found. This is a browser/device graphics limitation, not a Cloudflare token issue. Try Chrome/Edge with hardware acceleration enabled and an updated graphics driver. If the device has no supported GPU, this WebGPU model cannot run on it.');
+   if(!gpuAdapter){
+    localAiStage='CPU fallback engine';
+    setLocalAiStatus('No compatible GPU found. Switching to CPU/WASM Local AI; first startup may download model files and run more slowly…');
+    let transformers;
+    try{transformers=await import('https://esm.sh/@huggingface/transformers@3.7.2')}
+    catch(firstImportError){
+     try{transformers=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/+esm')}
+     catch(secondImportError){throw new Error('GPU is unavailable and both CPU engine CDNs failed. '+(secondImportError?.message||firstImportError?.message||''))}
+    }
+    transformers.env.allowLocalModels=false;
+    transformers.env.useBrowserCache=true;
+    const generator=await transformers.pipeline('text-generation','onnx-community/Qwen2.5-0.5B-Instruct',{device:'wasm',dtype:'q4',progress_callback:report=>{
+     if(report?.status==='progress')setLocalAiStatus('Downloading CPU model '+(report.file||'')+' '+Math.round((report.progress||0)*100)+'%');
+     else if(report?.status==='initiate')setLocalAiStatus('Preparing CPU model file '+(report.file||'')+'…');
+     else if(report?.status==='ready')setLocalAiStatus('CPU model component ready: '+(report.file||''));
+    }});
+    localAiEngine={chat:{completions:{create:async({messages,temperature=0.7,max_tokens=900})=>{
+     const result=await generator(messages,{max_new_tokens:max_tokens,temperature,do_sample:temperature>0,return_full_text:false});
+     const generated=result?.[0]?.generated_text;
+     const content=typeof generated==='string'?generated:Array.isArray(generated)?generated.filter(item=>item.role==='assistant').map(item=>item.content).join('\n'):String(generated||'');
+     return {choices:[{message:{content:content.trim()}}]};
+    }}};
+    localAiStage='ready';localAiEnabled=true;
+    if(localAiButton){localAiButton.textContent='⚡ Local AI: ON (CPU)';localAiButton.classList.add('local-ai-active')}
+    setLocalAiStatus('CPU/WASM Local AI is ready on this device. It works without WebGPU, but responses may be slower. The browser may cache downloaded model files for future visits.');
+    return;
+   }
    localAiStage='server manifest';
    setLocalAiStatus('Checking model version and local setup…');
    localAiManifest=await getLocalAiManifest();
