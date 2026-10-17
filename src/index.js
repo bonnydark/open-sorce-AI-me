@@ -196,8 +196,11 @@ export default {
                     };
                     const moduleSettings = { ...settings, ...moduleProfiles[moduleId], activeModule: moduleId };
                     let reply;
+                    let agentModelCalls = 1;
                     if (moduleId === "ai-agent" && !(Array.isArray(body.images) && body.images.length)) {
-                      reply = await runAgent(env, [...memoryContext, ...webContext, ...context], { maxSteps: 4 });
+                      const agentResult = await runAgent(env, [...memoryContext, ...webContext, ...context], { maxSteps: 4 });
+                      reply = agentResult.reply;
+                      agentModelCalls = agentResult.modelCalls;
                     } else if (moduleId === "gort") {
                       await learnGortMemory(env.DB, user.id, message, settings.autoMemories === true);
                       const gortMemories = await getGortMemories(env.DB, user.id);
@@ -232,9 +235,11 @@ export default {
                         : ["security-analyst", "study-tutor"].includes(moduleId) && imageCount === 0 ? "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
                         : imageCount > 0 ? "@cf/llava-hf/llava-1.5-7b-hf"
                         : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+                      const baseEstimatedCost = configuredUsageCost(env, imageCount);
+                      const estimatedCostUsd = moduleId === "ai-agent" && imageCount === 0 && baseEstimatedCost !== null
+                        ? baseEstimatedCost * agentModelCalls : baseEstimatedCost;
                       await recordUsage(env.DB, user.id, {
-                        moduleId, modelId, inputCharacters: message.length, imageCount,
-                        estimatedCostUsd: configuredUsageCost(env, imageCount)
+                        moduleId, modelId, inputCharacters: message.length, imageCount, estimatedCostUsd
                       });
                     } catch (usageError) { /* Metering must never turn a successful AI reply into a failed chat. */ }
                     response = json({ reply, conversationId, title: chat.title, moduleId });
