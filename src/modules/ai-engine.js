@@ -1,12 +1,11 @@
 import { coreChat, toMultimodalMessages } from "./core-ai.js";
 const MODELS = {
-  "ai-engine": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "code-copilot": "@cf/qwen/qwen2.5-coder-32b-instruct",
-  "security-analyst": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "study-tutor": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "vision-ai": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+  "ai-engine": "local-model",
+  "code-copilot": "local-model",
+  "security-analyst": "local-model",
+  "study-tutor": "local-model",
+  "vision-ai": "local-multimodal-model"
 };
-const VISION_MODEL = "@cf/llava-hf/llava-1.5-7b-hf";
 
 // Keep requests comfortably below smaller Workers AI context windows. This is a
 // character budget rather than an exact tokenizer, so leave room for tokenization
@@ -135,7 +134,7 @@ When the user asks which mode/support they are currently using (for example, "wh
     reply = await coreChat(env, multimodal, { max_tokens: 1200 });
   } else {
     const model = MODELS[settings.activeModule] || MODELS["ai-engine"];
-    const modelHint = "Selected logical module: " + (settings.activeModule || "ai-engine") + ". The server may use its configured local model for all modules.";
+    const modelHint = "Selected logical module: " + (settings.activeModule || "ai-engine") + ". Inference is handled by the configured self-hosted Core AI runtime.";
     reply = await coreChat(env, [
       { role: "system", content: systemContent + "\\n\\n" + modelHint },
       ...fitConversation(messages, 2800)
