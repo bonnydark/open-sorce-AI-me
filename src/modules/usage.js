@@ -1,6 +1,5 @@
 const json = (data, status = 200) => Response.json(data, { status });
 
-export const DAILY_TOKEN_ALLOWANCE = 100;
 export const PLAN_LIMITS = Object.freeze({
   free: { monthlyRequests: 100, label: "Free" },
   pro: { monthlyRequests: 2000, label: "Pro" },
@@ -51,8 +50,7 @@ async function readPlanUsage(db, userId) {
   }
   const requestedPlan = String(user?.plan || "free").toLowerCase();
   const plan = Object.hasOwn(PLAN_LIMITS, requestedPlan) ? requestedPlan : "free";
-  const [monthly, daily] = await Promise.all([
-    db.prepare(`
+  const monthly = await db.prepare(`
       SELECT COUNT(*) AS requests,
              COALESCE(SUM(input_characters),0) AS inputCharacters,
              COALESCE(SUM(image_count),0) AS images,
@@ -61,25 +59,21 @@ async function readPlanUsage(db, userId) {
              MIN(created_at) AS firstEventAt
       FROM usage_events
       WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
-    `).bind(userId).first(),
-    db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')").bind(userId).first()
-  ]);
+    `).bind(userId).first();
   const monthlyRequests = Number(monthly?.requests || 0);
-  const dailyRequests = Number(daily?.requests || 0);
   const tokenBalance = Math.max(0, Number(user?.token_balance || 0));
-  const dailyRemaining = Math.max(0, DAILY_TOKEN_ALLOWANCE - dailyRequests);
+  const monthlyLimit = PLAN_LIMITS[plan].monthlyRequests;
+  const monthlyRemaining = Math.max(0, monthlyLimit - monthlyRequests);
   return {
     plan, planLabel: PLAN_LIMITS[plan].label,
-    period: "calendar_day_utc",
-    dailyAllowance: DAILY_TOKEN_ALLOWANCE,
-    dailyRequests,
-    dailyRemaining,
+    period: "calendar_month_utc",
     requests: monthlyRequests,
     monthlyRequests,
-    monthlyLimit: PLAN_LIMITS[plan].monthlyRequests,
+    monthlyLimit,
+    monthlyRemaining,
     tokenBalance,
-    remaining: dailyRemaining + tokenBalance,
-    allowed: dailyRequests < DAILY_TOKEN_ALLOWANCE || tokenBalance > 0,
+    remaining: monthlyRemaining + tokenBalance,
+    allowed: monthlyRequests < monthlyLimit || tokenBalance > 0,
     inputCharacters: Number(monthly?.inputCharacters || 0),
     images: Number(monthly?.images || 0),
     estimatedCostUsd: Number(monthly?.estimatedCostUsd || 0),
@@ -94,12 +88,12 @@ export async function checkPlanQuota(db, userId) {
 
 export async function recordUsage(db, userId, { moduleId = "ai-engine", modelId = "unknown", inputCharacters = 0, imageCount = 0, estimatedCostUsd = null } = {}) {
   await ensureUsageSchema(db);
-  const daily = await db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')").bind(userId).first();
-  if (Number(daily?.requests || 0) >= DAILY_TOKEN_ALLOWANCE) {
-    // Daily allowance is free and resets at UTC midnight. Bonus credits are only spent after it is exhausted.
+  const quota = await readPlanUsage(db, userId);
+  if (quota.monthlyRequests >= quota.monthlyLimit) {
+    // Plan allowance is measured per UTC calendar month. Bonus credits are only spent after it is exhausted.
     const debit = await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
     const changed = Number(debit?.meta?.changes || 0);
-    if (changed < 1) throw new Error("Daily allowance is exhausted and no bonus credits remain.");
+    if (changed < 1) throw new Error("Monthly plan allowance is exhausted and no bonus credits remain.");
   }
   const cost = Number.isFinite(Number(estimatedCostUsd)) && estimatedCostUsd !== null && estimatedCostUsd !== "" ? Math.max(0, Number(estimatedCostUsd)) : null;
   await db.prepare(
@@ -132,6 +126,6 @@ export async function handleUsage(request, env, user) {
     ...status,
     costRatesConfigured,
     byModule: grouped.results || [],
-    metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets at 00:00 UTC (07:00 Vietnam time). Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
+    metering: "Monthly AI request limits: Free 100, Pro 2,000, Business 10,000 per UTC calendar month. After the plan allowance is used, each further successful request consumes one admin-granted bonus credit. The monthly allowance resets at the start of each UTC month. API tokens also have their own separate per-token daily rate limit. Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
   });
 }
