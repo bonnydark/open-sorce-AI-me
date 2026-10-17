@@ -9,14 +9,14 @@ const randomToken = () => {
 };
 const moduleIds = new Set(["grot-o1", "ai-engine", "ai-agent", "gort", "code-copilot", "security-analyst", "study-tutor", "vision-ai"]);
 const moduleModels = {
-  "grot-o1": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "ai-engine": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "ai-agent": "gort-agentic-readonly",
-  "gort": "gort-standalone",
-  "code-copilot": "@cf/qwen/qwen2.5-coder-32b-instruct",
-  "security-analyst": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "study-tutor": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "vision-ai": "@cf/llava-hf/llava-1.5-7b-hf"
+  "grot-o1": "core-ai",
+  "ai-engine": "core-ai",
+  "ai-agent": "core-ai-agent",
+  "gort": "core-ai-code",
+  "code-copilot": "core-ai-code",
+  "security-analyst": "core-ai-security",
+  "study-tutor": "core-ai-study",
+  "vision-ai": "core-ai-vision"
 };
 async function ensureSchema(db) {
   await db.prepare("CREATE TABLE IF NOT EXISTS api_tokens (id TEXT PRIMARY KEY NOT NULL,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,token_hash TEXT NOT NULL UNIQUE,token_prefix TEXT NOT NULL,label TEXT NOT NULL DEFAULT 'External app',created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),last_used_at TEXT,revoked_at TEXT)").run();
