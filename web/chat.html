@@ -713,7 +713,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
    localAiStage='model cache/download';
    setLocalAiButtonLabel('Loading Local AI…');
    setLocalAiStatus('Step 3/4: Checking this browser’s saved model cache. If it is missing or incomplete, WebLLM will download the required files again.');
-   const appConfig={...webllm.prebuiltAppConfig,cacheBackend:localAiManifest.cacheBackend==='indexeddb'?'indexeddb':'cache'};
+   const appConfig={...webllm.prebuiltAppConfig,cacheBackend:'cache'};
    localAiEngine=await webllm.CreateMLCEngine(localAiManifest.modelId,{appConfig,initProgressCallback:report=>setLocalAiStatus((report?.text||'Preparing model…')+' · '+localAiManifest.modelVersion)});
    localAiStage='ready';
    localAiEnabled=true;localAiButton.textContent='⚡ Local AI: ON';localAiButton.classList.add('local-ai-active');
