@@ -65,7 +65,7 @@ export default {
     try {
       let response;
       if (url.pathname === "/api/health" && request.method === "GET") {
-        response = json({ ok: true, service: "gortgpt", ai: Boolean(env.AI), database: Boolean(env.DB) });
+        response = json({ ok: true, service: "gortgpt", ai: Boolean(env.CORE_AI_URL), database: Boolean(env.DB) });
       } else if (/^\/api\/shared\/[a-f0-9]{64}\/files\/[a-f0-9-]+\/view$/i.test(url.pathname) && request.method === "GET") {
         response = await getSharedFile(request, env, url);
       } else if (url.pathname === "/api/billing/webhook" && request.method === "POST") {
@@ -226,7 +226,7 @@ export default {
                         // The configured self-hosted Gort endpoint may be text-only.
                         // Route image-bearing requests through the existing vision-capable Workers AI path.
                         reply = await generateReply(
-                          env.AI,
+                          env,
                           [...memoryContext, ...webContext, ...context],
                           { ...moduleSettings, visionMode: true },
                           body.images
@@ -236,13 +236,13 @@ export default {
                       }
                     } else if (moduleId === "code-copilot" && !(Array.isArray(body.images) && body.images.length)) {
                       // Code Copilot has its own module file, system prompt, and model route.
-                      reply = await generateCodeCopilotReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings);
+                      reply = await generateCodeCopilotReply(env, [...memoryContext, ...webContext, ...context], moduleSettings);
                     } else if (["security-analyst", "study-tutor"].includes(moduleId) && !(Array.isArray(body.images) && body.images.length)) {
                       // Specialist modules use independent prompts and inference entry points.
-                      reply = await generateSpecialistReply(env.AI, moduleId, [...memoryContext, ...webContext, ...context], moduleSettings);
+                      reply = await generateSpecialistReply(env, moduleId, [...memoryContext, ...webContext, ...context], moduleSettings);
                     } else {
                       // Vision requests use the image-capable path; text-only general chat remains unchanged.
-                      reply = await generateReply(env.AI, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
+                      reply = await generateReply(env, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                     }
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
                     try {
