@@ -48,7 +48,7 @@ export async function runAgent(env, conversation, options = {}) {
   const lastUserMessage = [...history].reverse().find(item => item.role === "user")?.content || "";
   const researchIntent = options.forceResearch === true || /\b(research|sources?|citations?|references?|fact.?check|verify|latest|current|today|recent|news|202[0-9])\b|tìm nguồn|trích dẫn|dẫn nguồn|đối chiếu|kiểm chứng|tra cứu|tìm trên mạng|tìm trên web|mới nhất|hôm nay|hiện tại|tin mới|nghiên cứu/i.test(lastUserMessage);
   const first = await ask(env, PLANNER_SYSTEM, history);
-  if (researchIntent && first.action === "finish") {
+  if (researchIntent) {
     first.action = "search_web";
     first.query = String(lastUserMessage).slice(0, 220);
   }
@@ -69,7 +69,7 @@ export async function runAgent(env, conversation, options = {}) {
             : "No search results were returned.";
           for (const item of (Array.isArray(results) ? results : []).slice(0,5)) {
             if (item.url && !sources.some(source => source.url === item.url)) {
-              let domain = ""; try { domain = new URL(item.url).hostname.replace(/^www\\./, ""); } catch {}
+              let domain = ""; try { domain = new URL(item.url).hostname.replace(/^www\./, ""); } catch {}
               sources.push({ title: String(item.title || item.url).slice(0,180), url: item.url, domain });
             }
           }
