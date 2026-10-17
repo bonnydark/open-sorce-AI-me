@@ -200,7 +200,16 @@ export default {
           assetUrl.search = url.search;
           return env.ASSETS.fetch(new Request(assetUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
         }
-        if (url.pathname === "/") return env.ASSETS.fetch(request);
+        if (url.pathname === "/") {
+          // Assets html_handling is disabled, so map the root URL explicitly to the landing page.
+          const landingUrl = new URL("/index.html", url.origin);
+          landingUrl.search = url.search;
+          return env.ASSETS.fetch(new Request(landingUrl, {
+            method: request.method,
+            headers: request.headers,
+            redirect: "manual"
+          }));
+        }
         // Serve the chat document explicitly for both canonical and legacy chat URLs.
         // Do not depend on the static-assets SPA fallback for application routing.
         const isChatDocument =
