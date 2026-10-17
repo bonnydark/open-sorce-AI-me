@@ -125,9 +125,9 @@ When the user asks which mode/support they are currently using (for example, "wh
     const visionPrompt = [
       "You are a multilingual visual assistant. Analyze the attached image(s), answer in the same language as the user's latest message, ground claims in visible evidence, and state uncertainty when details are unclear.",
       "Do not claim you cannot see images when image content is provided."
-    ].join("\\n\\n");
+    ].join("\n\n");
     const multimodal = toMultimodalMessages([
-      { role: "system", content: visionPrompt + "\\n\\n" + systemContent },
+      { role: "system", content: visionPrompt + "\n\n" + systemContent },
       ...recentMessages,
       { role: "user", content: latestUserRequest.slice(-700) }
     ], imageData);
@@ -136,7 +136,7 @@ When the user asks which mode/support they are currently using (for example, "wh
     const model = MODELS[settings.activeModule] || MODELS["ai-engine"];
     const modelHint = "Selected logical module: " + (settings.activeModule || "ai-engine") + ". Inference is handled by the configured self-hosted Core AI runtime.";
     reply = await coreChat(env, [
-      { role: "system", content: systemContent + "\\n\\n" + modelHint },
+      { role: "system", content: systemContent + "\n\n" + modelHint },
       ...fitConversation(messages, 2800)
     ], { max_tokens: messages.some(item => item.role === "user" && item.content.includes("FILE EDIT TASK")) ? 4096 : 1024 });
   }
