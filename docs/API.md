@@ -82,4 +82,13 @@ console.log(data.choices[0].message.content);
 
 ## Response shape
 
-Successful calls return an OpenAI-style `chat.completion` object with `choices[0].message.content` and approximate token counts. The usage numbers are estimates derived from character counts, not exact provider token accounting. API tokens are stored as SHA-256 hashes; the original token is returned only at creation time.
+Successful calls return an OpenAI-style `chat.completion` object with `choices[0].message.content` and approximate token counts. The usage numbers are estimates derived from character counts, not exact provider token accounting. API tokens are SHA-256 hashed for authentication and encrypted at rest for owner-only reveal. Configure the Cloudflare Worker secret `API_TOKEN_ENCRYPTION_KEY` (at least 32 characters and stable) before creating tokens. Tokens created before encrypted storage was added cannot be revealed; recreate those tokens if you need the reveal feature.
+
+## Per-token usage and limits
+
+In the signed-in workspace, open **Settings → Developer API tokens** and select a token to open `/token-usage.html?id=…`. Only the signed-in owner can view that token's statistics. The dashboard shows requests today and all time, input/output characters, estimated cost, purpose, and its daily request limit.
+
+- Each token starts at 100 successful AI requests per day by default.
+- Set a token-specific purpose and daily limit (1–10,000 requests/day) on its dashboard. The token limit is enforced independently and resets at 00:00 UTC / 07:00 Vietnam time.
+- Revoke an active token to stop its use. Delete a revoked token to permanently remove it and its associated usage records.
+- Token usage estimates are not a provider invoice. The account-wide quota still applies as well.
