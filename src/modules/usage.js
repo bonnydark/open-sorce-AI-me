@@ -73,16 +73,17 @@ export async function checkPlanQuota(db, userId) {
   return readPlanUsage(db, userId);
 }
 
-export async function recordUsage(db, userId, { moduleId = "ai-engine", inputCharacters = 0, imageCount = 0 } = {}) {
+export async function recordUsage(db, userId, { moduleId = "ai-engine", modelId = "unknown", inputCharacters = 0, imageCount = 0, estimatedCostUsd = null } = {}) {
   await ensureUsageSchema(db);
   const daily = await db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')").bind(userId).first();
   if (Number(daily?.requests || 0) >= DAILY_TOKEN_ALLOWANCE) {
-    // Daily allowance is free and resets at UTC midnight. Admin-granted bonus credits are only spent after it is exhausted.
+    // Daily allowance is free and resets at UTC midnight. Bonus credits are only spent after it is exhausted.
     await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
   }
+  const cost = Number.isFinite(Number(estimatedCostUsd)) && estimatedCostUsd !== null && estimatedCostUsd !== "" ? Math.max(0, Number(estimatedCostUsd)) : null;
   await db.prepare(
-    "INSERT INTO usage_events (id,user_id,module_id,input_characters,image_count) VALUES (?,?,?,?,?)"
-  ).bind(crypto.randomUUID(), userId, String(moduleId).slice(0, 64), Math.max(0, Math.floor(inputCharacters)), Math.max(0, Math.floor(imageCount))).run();
+    "INSERT INTO usage_events (id,user_id,module_id,model_id,input_characters,image_count,estimated_cost_usd) VALUES (?,?,?,?,?,?,?)"
+  ).bind(crypto.randomUUID(), userId, String(moduleId).slice(0, 64), String(modelId || "unknown").slice(0, 120), Math.max(0, Math.floor(inputCharacters)), Math.max(0, Math.floor(imageCount)), cost).run();
 }
 
 export async function handleUsage(request, env, user) {
@@ -90,7 +91,9 @@ export async function handleUsage(request, env, user) {
   const status = await readPlanUsage(env.DB, user.id);
   const grouped = await env.DB.prepare(`
     SELECT module_id AS moduleId, COUNT(*) AS requests,
-           COALESCE(SUM(image_count),0) AS images
+           COALESCE(SUM(image_count),0) AS images,
+           COALESCE(SUM(estimated_cost_usd),0) AS estimatedCostUsd,
+           SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS pricedRequests
     FROM usage_events
     WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')
     GROUP BY module_id ORDER BY requests DESC
@@ -98,6 +101,6 @@ export async function handleUsage(request, env, user) {
   return json({
     ...status,
     byModule: grouped.results || [],
-    metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets automatically at UTC midnight. Prompt, response, and image contents are not stored in usage_events."
+    metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets at 00:00 UTC (07:00 Vietnam time). Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and/or AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
   });
 }
