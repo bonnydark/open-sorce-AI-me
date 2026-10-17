@@ -70,7 +70,7 @@ export async function handleBusinessTeam(request, env, user, url) {
       return json({ok:true,message:"Team member added. Their AI requests now use the shared Business allowance.",member:{id:member.id,email:member.email,name:member.display_name}});
     } catch(error) {
       if(/unique|constraint/i.test(String(error?.message||error))) return json({error:"This account is already on a Business team."},409);
-      return json({error:"Could not add team member. Confirm migration 0010_business_teams.sql is applied."},503);
+      return json({error:"Could not add team member. Confirm migration 0011_business_teams.sql is applied."},503);
     }
   }
   const remove=path.match(/^\/api\/business\/team\/members\/([a-f0-9-]+)$/i);
