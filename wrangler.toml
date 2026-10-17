@@ -17,6 +17,3 @@ database_name = "open-sorce-ai-me-db"
 database_id = "db246638-4bd8-4e26-85ce-52fe450c4404"
 migrations_dir = "migrations"
 
-[vars]
-AI_ESTIMATED_COST_PER_IMAGE_USD = "0.001"
-AI_ESTIMATED_COST_PER_REQUEST_USD = "0.001"
