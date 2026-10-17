@@ -16,7 +16,7 @@ function shouldAutoResearch(conversation, settings) {
   if (settings.agentMode === true) return true;
   const lastUser = [...(Array.isArray(conversation) ? conversation : [])].reverse().find(item => item?.role === "user" && typeof item.content === "string");
   const text = String(lastUser?.content || "").toLowerCase();
-  const asksForResearch = /\b(research|sources?|citations?|references?|compare (?:the )?sources|fact.?check|verify (?:this|these)|look up|search (?:the )?web|latest|current|today|recent|news|202[0-9])\b|tìm nguồn|trích dẫn|dẫn nguồn|đối chiếu|kiểm chứng|tra cứu|tìm trên mạng|tìm trên web|mới nhất|hôm nay|hiện tại|tin mới|nguồn uy tín|nghiên cứu/i.test(text);
+  const asksForResearch = /\b(research|sources?|citations?|references?|compare (?:the )?sources|fact.?check|verify (?:this|these)|look up|search (?:the )?web|latest|current|today|recent|news|202[0-9])\b|tìm nguồn|tìm thông tin|tìm hiểu|trích dẫn|dẫn nguồn|đối chiếu|kiểm chứng|tra cứu|tìm trên mạng|tìm trên web|mới nhất|hôm nay|hiện tại|tin mới|thông tin mới|nguồn uy tín|nghiên cứu|so sánh|đánh giá|bài báo|tài liệu chính thức/i.test(text);
   return asksForResearch && settings.researchMode !== "off";
 }
 
