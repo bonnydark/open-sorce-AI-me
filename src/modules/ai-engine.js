@@ -1,3 +1,4 @@
+import { coreChat, toMultimodalMessages } from "./core-ai.js";
 const MODELS = {
   "ai-engine": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "code-copilot": "@cf/qwen/qwen2.5-coder-32b-instruct",
@@ -91,8 +92,7 @@ const profilePrompts = {
   student: "Student workspace: teach step by step, explain concepts in plain language, use examples and small exercises, check understanding, and help the learner build their own solution rather than only giving unexplained answers."
 };
 
-export async function generateReply(aiBinding, conversation, settings = {}, images = []) {
-  if (!aiBinding) throw new Error("Cloudflare Workers AI binding AI is missing.");
+export async function generateReply(env, conversation, settings = {}, images = []) {
   const style = stylePrompts[settings.answerStyle] || stylePrompts.balanced;
   const personality = personalityPrompts[settings.personality] || personalityPrompts.classic;
   const humor = ({ off: "Use no humor.", low: "Use only occasional gentle humor.", medium: "Light humor is welcome when appropriate.", high: "Be witty and playful when appropriate, but stay useful and respectful." })[settings.humorLevel] || "Use only occasional gentle humor.";
@@ -119,53 +119,28 @@ When the user asks which mode/support they are currently using (for example, "wh
   const systemContent = (SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nPersonality: " + personality + "\n\nHumor preference: " + humor + "\n\nCustom style: " + customStyle + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile + visionInstruction).slice(0, 4200);
   const systemMessage = { role: "system", content: systemContent };
   const imageData = Array.isArray(images) ? images.filter(image => typeof image === "string" && /^data:image\/(png|jpeg|webp|gif|bmp|avif);base64,/i.test(image)).slice(0, 3) : [];
-  let result;
+  let reply;
   if (imageData.length) {
-    // LLaVA accepts raw image bytes and a text prompt, and does not use the gated
-    // Meta Llama 3.2 Vision model that requires a one-time license agreement.
-    // Vision models have a smaller prompt context than the main chat model.
-    // Do not send the full system prompt or the entire conversation to LLaVA.
     const recentMessages = fitConversation(messages.filter(item => item.role !== "system").slice(-4), 900);
-    const transcript = recentMessages.map(item => {
-      const content = typeof item.content === "string" ? item.content : "";
-      return (item.role || "user").toUpperCase() + ": " + content;
-    }).join("\n");
-    const latestUserRequest = (messages.filter(item => item.role === "user").slice(-1)[0]?.content || "Describe the image.")
-      .replace(/\\[\\[OSAI_IMAGE:[^\\]]+\\]\\]/g, "[attached image]")
-      .replace(/IMAGE ATTACHED: [^\\n]+/g, "")
-      .slice(-700);
+    const latestUserRequest = messages.filter(item => item.role === "user").slice(-1)[0]?.content || "Describe the image.";
     const visionPrompt = [
-      "You are a multilingual visual assistant. Analyze the image bytes provided with this request and answer the user's question in the same language as the latest user message.",
-      "Be specific and grounded in visible evidence. If text is present, read it only when legible. State uncertainty about unclear details. Never claim you cannot see the image when image bytes are provided.",
-      transcript ? "Recent context:\\n" + transcript : "",
-      "Current user request: " + latestUserRequest
-    ].filter(Boolean).join("\\n\\n").slice(0, 2600);
-    const descriptions = [];
-    for (const imageUrl of imageData) {
-      const match = imageUrl.match(/^data:image\/(?:png|jpeg|webp|gif|bmp|avif);base64,([\s\S]+)$/i);
-      if (!match) continue;
-      const binary = atob(match[1]);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const visionResult = await aiBinding.run(VISION_MODEL, {
-        image: [...bytes],
-        prompt: visionPrompt,
-        max_tokens: 1024
-      });
-      const description = visionResult?.description ?? visionResult?.response ?? visionResult?.output_text;
-      if (typeof description === "string" && description.trim()) descriptions.push(description.trim());
-    }
-    result = { response: descriptions.length ? descriptions.map((item, i) => imageData.length > 1 ? "Image " + (i + 1) + ":\n" + item : item).join("\n\n") : "" };
+      "You are a multilingual visual assistant. Analyze the attached image(s), answer in the same language as the user's latest message, ground claims in visible evidence, and state uncertainty when details are unclear.",
+      "Do not claim you cannot see images when image content is provided."
+    ].join("\\n\\n");
+    const multimodal = toMultimodalMessages([
+      { role: "system", content: visionPrompt + "\\n\\n" + systemContent },
+      ...recentMessages,
+      { role: "user", content: latestUserRequest.slice(-700) }
+    ], imageData);
+    reply = await coreChat(env, multimodal, { max_tokens: 1200 });
   } else {
     const model = MODELS[settings.activeModule] || MODELS["ai-engine"];
-    result = await aiBinding.run(model, {
-      messages: [systemMessage, ...fitConversation(messages, 2800)],
-      max_tokens: messages.some(item => item.role === "user" && item.content.includes("FILE EDIT TASK")) ? 4096 : 1024
-    });
+    const modelHint = "Selected logical module: " + (settings.activeModule || "ai-engine") + ". The server may use its configured local model for all modules.";
+    reply = await coreChat(env, [
+      { role: "system", content: systemContent + "\\n\\n" + modelHint },
+      ...fitConversation(messages, 2800)
+    ], { max_tokens: messages.some(item => item.role === "user" && item.content.includes("FILE EDIT TASK")) ? 4096 : 1024 });
   }
-  const reply = result?.response ?? result?.choices?.[0]?.message?.content;
-  if (typeof reply !== "string" || !reply.trim()) {
-    throw new Error("The model returned an empty response.");
-  }
+  if (typeof reply !== "string" || !reply.trim()) throw new Error("GortGPT Core returned an empty response.");
   return reply.trim();
 }
