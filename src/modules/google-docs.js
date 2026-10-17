@@ -1,4 +1,4 @@
-const DOCS_SCOPE = "https://www.googleapis.com/auth/documents.create";
+const DOCS_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const CALLBACK_PATH = "/api/integrations/google/callback";
 const COOKIE_NAME = "grot_google_oauth_state";
 const json = (data, status = 200) => Response.json(data, { status });
