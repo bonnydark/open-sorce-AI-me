@@ -24,8 +24,10 @@ function configuredUsageCost(env, imageCount) {
   const imageRate = Number(env.AI_ESTIMATED_COST_PER_IMAGE_USD);
   const hasRequestRate = env.AI_ESTIMATED_COST_PER_REQUEST_USD !== undefined && env.AI_ESTIMATED_COST_PER_REQUEST_USD !== "" && Number.isFinite(requestRate) && requestRate >= 0;
   const hasImageRate = env.AI_ESTIMATED_COST_PER_IMAGE_USD !== undefined && env.AI_ESTIMATED_COST_PER_IMAGE_USD !== "" && Number.isFinite(imageRate) && imageRate >= 0;
-  if (!hasRequestRate && !hasImageRate) return null;
-  return (hasRequestRate ? requestRate : 0) + (hasImageRate ? imageRate * imageCount : 0);
+  // Avoid displaying a misleading partial estimate: a base rate is required,
+  // and image requests need an image rate as well.
+  if (!hasRequestRate || (imageCount > 0 && !hasImageRate)) return null;
+  return requestRate + (hasImageRate ? imageRate * imageCount : 0);
 }
 function corsHeaders(request) {
   const origin = request.headers.get("Origin");
