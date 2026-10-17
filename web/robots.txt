@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /chat
+Disallow: /chat.html
+Disallow: /billing
+Disallow: /billing.html
+Sitemap: https://openai.xzort.workers.dev/sitemap.xml
