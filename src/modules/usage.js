@@ -21,6 +21,19 @@ async function ensureUsageSchema(db) {
         estimated_cost_usd REAL,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
       )`).run();
+
+      // Older production databases may already have one of these columns.
+      // D1/SQLite does not support ALTER TABLE ... ADD COLUMN IF NOT EXISTS,
+      // so inspect the table and only add missing columns.
+      const schema = await db.prepare("PRAGMA table_info(usage_events)").all();
+      const columns = new Set((schema.results || []).map(column => column.name));
+      if (!columns.has("model_id")) {
+        await db.prepare("ALTER TABLE usage_events ADD COLUMN model_id TEXT NOT NULL DEFAULT 'unknown'").run();
+      }
+      if (!columns.has("estimated_cost_usd")) {
+        await db.prepare("ALTER TABLE usage_events ADD COLUMN estimated_cost_usd REAL").run();
+      }
+
       await db.prepare("CREATE INDEX IF NOT EXISTS usage_events_user_created_idx ON usage_events(user_id, created_at DESC)").run();
       await db.prepare("CREATE INDEX IF NOT EXISTS usage_events_user_module_created_idx ON usage_events(user_id, module_id, created_at DESC)").run();
     })().catch(error => { usageSchemaReady = null; throw error; });
