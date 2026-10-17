@@ -8,7 +8,7 @@ const defaults = {
   answerStyle: "balanced",
   personality: "classic",
   humorLevel: "low",
-  researchMode: "on-demand",
+  researchMode: "proactive",
   sandboxMode: true,
   activeModule: "grot-o1",
   agentMode: false,
