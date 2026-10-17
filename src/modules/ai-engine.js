@@ -116,7 +116,7 @@ When the user asks which mode/support they are currently using (for example, "wh
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string")
     : [];
   const visionInstruction = settings.visionMode ? "\n\nVISION AI MODE: You specialize in understanding images, screenshots, diagrams, documents, and visual debugging. Describe only details supported by the image; state uncertainty clearly." : "";
-  const systemContent = (SYSTEM_PROMPT + "\\n\\n" + activeModeContext + "\\n\\nPersonality: " + personality + "\\n\\nHumor preference: " + humor + "\\n\\nCustom style: " + customStyle + "\\n\\nUser response preference: " + style + "\\n\\nWorkspace profile: " + profile + visionInstruction).slice(0, 4200);
+  const systemContent = (SYSTEM_PROMPT + "\n\n" + activeModeContext + "\n\nPersonality: " + personality + "\n\nHumor preference: " + humor + "\n\nCustom style: " + customStyle + "\n\nUser response preference: " + style + "\n\nWorkspace profile: " + profile + visionInstruction).slice(0, 4200);
   const systemMessage = { role: "system", content: systemContent };
   const imageData = Array.isArray(images) ? images.filter(image => typeof image === "string" && /^data:image\/(png|jpeg|webp|gif|bmp|avif);base64,/i.test(image)).slice(0, 3) : [];
   let result;
