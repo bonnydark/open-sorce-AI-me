@@ -10,6 +10,41 @@ function isBlockedHost(hostname) {
   }
   return false;
 }
+async function fetchGitHubRepository(url) {
+  const match = url.pathname.match(/^\/([^/]+)\/([^/]+)\/?$/);
+  if (url.hostname.toLowerCase() !== "github.com" || !match) return null;
+  const owner = match[1];
+  const repo = match[2].replace(/\.git$/i, "");
+  if (owner.startsWith(".") || repo.startsWith(".")) return null;
+  const headers = { "User-Agent": "OpenSourceAI-Me-WebReader/1.0", "Accept": "application/vnd.github+json" };
+  const apiBase = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo);
+  const metadataResponse = await fetch(apiBase, { headers, signal: AbortSignal.timeout(8000) });
+  if (!metadataResponse.ok) throw new Error("GitHub repository lookup returned HTTP " + metadataResponse.status + ".");
+  const metadata = await metadataResponse.json();
+  const parts = [
+    "GitHub public repository: " + metadata.full_name,
+    "Description: " + (metadata.description || "No description provided."),
+    "Default branch: " + (metadata.default_branch || "unknown"),
+    "Language: " + (metadata.language || "not specified"),
+    "Stars: " + Number(metadata.stargazers_count || 0),
+    "Last updated: " + (metadata.updated_at || "unknown"),
+    "Repository URL: " + (metadata.html_url || url.toString()),
+    "Topics: " + (Array.isArray(metadata.topics) && metadata.topics.length ? metadata.topics.join(", ") : "not listed")
+  ];
+  try {
+    const readmeResponse = await fetch(apiBase + "/readme", { headers, signal: AbortSignal.timeout(8000) });
+    if (readmeResponse.ok) {
+      const readme = await readmeResponse.json();
+      if (typeof readme.content === "string" && readme.encoding === "base64") {
+        const binary = atob(readme.content.replace(/\s/g, ""));
+        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+        const decoded = new TextDecoder().decode(bytes).slice(0, 50000);
+        parts.push("README file: " + (readme.path || "README") + "\nBEGIN README CONTENT\n" + decoded + "\nEND README CONTENT");
+      }
+    }
+  } catch {}
+  return { url: url.toString(), status: 200, contentType: "application/vnd.github.repository+text", text: parts.join("\n") };
+}
 export async function fetchPublicText(input, redirectCount = 0) {
   if (redirectCount > 2) throw new Error("Too many redirects; open the final public URL directly.");
   let url;
@@ -17,6 +52,8 @@ export async function fetchPublicText(input, redirectCount = 0) {
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Only HTTP and HTTPS URLs are allowed.");
   if (url.username || url.password || isBlockedHost(url.hostname)) throw new Error("That host is blocked for safety.");
   if (url.port && !["80","443"].includes(url.port)) throw new Error("Only standard HTTP/HTTPS ports are allowed.");
+  const githubRepository = await fetchGitHubRepository(url);
+  if (githubRepository) return githubRepository;
   const response = await fetch(url.toString(), { method: "GET", redirect: "manual", headers: { "User-Agent": "OpenSourceAI-Me-WebReader/1.0", "Accept": "text/html,text/plain,application/json,application/javascript,text/css,*/*;q=0.2" }, signal: AbortSignal.timeout(8000) });
   if ([301,302,303,307,308].includes(response.status)) {
     const location = response.headers.get("Location");
