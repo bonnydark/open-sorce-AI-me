@@ -21,7 +21,7 @@ function extractText(result) {
 }
 async function ask(env, system, messages, extra = "") {
   const result = await coreChat(env, [
-    { role: "system", content: system + (extra ? "\\n\\n" + extra : "") },
+    { role: "system", content: system + (extra ? "\n\n" + extra : "") },
     ...messages
   ], { max_tokens: 1800 });
   return parseDecision(result);
