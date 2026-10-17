@@ -28,7 +28,7 @@ export async function generateGortReply(env, conversation, settings = {}, memori
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string").slice(-40)
     : [];
   const memoryText = memories.length
-    ? "\\n\\nGORT PRIVATE ACCOUNT MEMORY (use only when relevant):\\n" + memories.map(item => "- " + item.content).join("\\n")
+    ? "\n\nGORT PRIVATE ACCOUNT MEMORY (use only when relevant):\\n" + memories.map(item => "- " + item.content).join("\\n")
     : "";
   const detail = ({ concise: "Be concise but include complete fixes.", balanced: "Use balanced explanations and practical steps.", detailed: "Explain thoroughly with examples and tests." })[settings.answerStyle] || "Use balanced explanations and practical steps.";
   return coreChat(env, [
