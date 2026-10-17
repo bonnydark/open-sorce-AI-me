@@ -247,14 +247,7 @@ export default {
                     await appendMessage(env.DB, user.id, conversationId, "assistant", reply);
                     try {
                       const imageCount = Array.isArray(body.images) ? body.images.length : 0;
-                      const modelId = moduleId === "grot-o1" ? (imageCount > 0 ? "@cf/llava-hf/llava-1.5-7b-hf" : moduleSettings.agentMode ? "gort-agentic-readonly" : moduleSettings.specialistMode && moduleSettings.workspaceProfile === "developer" ? "@cf/qwen/qwen2.5-coder-32b-instruct" : "@cf/meta/llama-3.3-70b-instruct-fp8-fast")
-                        : moduleId === "ai-agent" && imageCount === 0 ? "gort-agentic-readonly"
-                        : moduleId === "gort"
-                        ? (env.GORT_MODEL_NAME || (env.GORT_INFERENCE_URL ? "self-hosted-model" : "@cf/meta/llama-3.3-70b-instruct-fp8-fast"))
-                        : moduleId === "code-copilot" && imageCount === 0 ? "@cf/qwen/qwen2.5-coder-32b-instruct"
-                        : ["security-analyst", "study-tutor"].includes(moduleId) && imageCount === 0 ? "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-                        : imageCount > 0 ? "@cf/llava-hf/llava-1.5-7b-hf"
-                        : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+                      const modelId = imageCount > 0 ? "self-hosted-multimodal-model" : (env.CORE_AI_MODEL || "local-model");
                       const baseEstimatedCost = configuredUsageCost(env, imageCount);
                       const estimatedCostUsd = ((moduleId === "ai-agent" && imageCount === 0) || (moduleId === "grot-o1" && agentModelCalls > 1 && imageCount === 0)) && baseEstimatedCost !== null
                         ? baseEstimatedCost * agentModelCalls : baseEstimatedCost;
