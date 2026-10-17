@@ -717,7 +717,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
    const modelList=(webllm.prebuiltAppConfig?.model_list||[]).map(item=>{
     if(item.model_id!==localAiManifest.modelId)return item;
     const libraryName=String(item.model_lib||'').split('/').pop();
-    return {...item,model:new URL('/api/local-ai/model',location.origin).href,model_lib:new URL('/api/local-ai/model-lib?name='+encodeURIComponent(libraryName),location.origin).href};
+    return {...item,model:new URL('/api/local-ai/model/resolve/main/',location.origin).href,model_lib:new URL('/api/local-ai/model-lib?name='+encodeURIComponent(libraryName),location.origin).href};
    });
    const appConfig={...webllm.prebuiltAppConfig,cacheBackend:'cache',model_list:modelList};
    for(let attempt=1;attempt<=2;attempt++){
