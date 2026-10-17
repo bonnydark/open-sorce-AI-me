@@ -6,8 +6,12 @@ function getImageEndpoint(env) {
   let url;
   try { url = new URL(raw); } catch { throw new Error("CORE_IMAGE_URL must be a valid URL."); }
   if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") throw new Error("CORE_IMAGE_URL must use HTTPS outside localhost.");
-  const path = url.pathname.replace(/\\/$/, "");
-  if (/\\/v1\\/images\\/generations$/.test(path)) return url;
+  let path = url.pathname;
+  while (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  if (path.endsWith("/v1/images/generations")) {
+    url.pathname = path;
+    return url;
+  }
   url.pathname = (path.endsWith("/v1") ? path : path + "/v1") + "/images/generations";
   return url;
 }
@@ -36,8 +40,12 @@ export async function handleImageGeneration(request, env, user) {
     let image = item?.b64_json || item?.image || item?.image_base64;
     let mimeType = item?.mime_type || "image/png";
     if (typeof image === "string" && image.startsWith("data:image/")) {
-      const match = image.match(/^data:(image\\/[a-z0-9.+-]+);base64,([\\s\\S]+)$/i);
-      if (match) { mimeType = match[1]; image = match[2]; }
+      const comma = image.indexOf(",");
+      if (comma > 0 && image.slice(0, comma).includes(";base64")) {
+        const declaredMime = image.slice(5, image.indexOf(";"));
+        if (declaredMime.startsWith("image/")) mimeType = declaredMime;
+        image = image.slice(comma + 1);
+      }
     }
     if (typeof image !== "string" && typeof item?.url === "string") {
       const imageResponse = await fetch(item.url, { signal: AbortSignal.timeout(30000) });
