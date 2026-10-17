@@ -1,7 +1,7 @@
 const json = (data, status = 200) => Response.json(data, { status });
 const plans = Object.freeze({
-  pro: { label: "Pro", priceEnv: "STRIPE_PRICE_PRO_MONTHLY", requests: 2000 },
-  business: { label: "Business", priceEnv: "STRIPE_PRICE_BUSINESS_MONTHLY", requests: 10000 }
+  pro: { label: "Pro", priceEnv: "STRIPE_PRICE_PRO_MONTHLY", requests: 6000 },
+  business: { label: "Business", priceEnv: "STRIPE_PRICE_BUSINESS_MONTHLY", requests: 20000 }
 });
 
 function stripeConfigured(env) {
