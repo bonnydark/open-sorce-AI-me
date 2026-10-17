@@ -1,7 +1,7 @@
 const json = (data, status = 200) => Response.json(data, { status });
 
 export const PLAN_LIMITS = Object.freeze({
-  free: { monthlyRequests: 100, label: "Free" },
+  free: { monthlyRequests: 3000, label: "Free" },
   pro: { monthlyRequests: 2000, label: "Pro" },
   business: { monthlyRequests: 10000, label: "Business" }
 });
@@ -126,6 +126,6 @@ export async function handleUsage(request, env, user) {
     ...status,
     costRatesConfigured,
     byModule: grouped.results || [],
-    metering: "Monthly AI request limits: Free 100, Pro 2,000, Business 10,000 per UTC calendar month. After the plan allowance is used, each further successful request consumes one admin-granted bonus credit. The monthly allowance resets at the start of each UTC month. API tokens also have their own separate per-token daily rate limit. Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
+    metering: "Monthly AI request limits: Free 3,000, Pro 2,000, Business 10,000 per UTC calendar month. After the plan allowance is used, each further successful request consumes one admin-granted bonus credit. The monthly allowance resets at the start of each UTC month. API tokens also have their own separate per-token daily rate limit. Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
   });
 }
