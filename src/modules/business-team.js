@@ -8,7 +8,12 @@ async function getMembership(db, userId) {
     WHERE m.member_user_id=? AND m.status='active' LIMIT 1`).bind(userId).first();
 }
 async function teamPayload(db, ownerId, viewerId) {
-  const owner = await db.prepare("SELECT id,email,display_name AS name,plan,token_balance AS tokens FROM users WHERE id=?").bind(ownerId).first();
+  const owner = await db.prepare(`SELECT u.id,u.email,u.display_name AS name,u.plan,u.token_balance AS tokens,
+      (SELECT COUNT(*) FROM usage_events e WHERE e.user_id=u.id AND e.created_at>=strftime('%Y-%m-01T00:00:00.000Z','now')) AS requests,
+      (SELECT COALESCE(SUM(e.image_count),0) FROM usage_events e WHERE e.user_id=u.id AND e.created_at>=strftime('%Y-%m-01T00:00:00.000Z','now')) AS images,
+      (SELECT COALESCE(SUM(e.estimated_cost_usd),0) FROM usage_events e WHERE e.user_id=u.id AND e.created_at>=strftime('%Y-%m-01T00:00:00.000Z','now')) AS estimatedCostUsd,
+      (SELECT COUNT(e.estimated_cost_usd) FROM usage_events e WHERE e.user_id=u.id AND e.created_at>=strftime('%Y-%m-01T00:00:00.000Z','now')) AS pricedRequests
+    FROM users u WHERE u.id=?`).bind(ownerId).first();
   if (!owner || owner.plan !== "business") return null;
   const start = monthStart();
   const members = await db.prepare(`SELECT u.id,u.email,u.display_name AS name,m.created_at AS addedAt,
@@ -70,7 +75,7 @@ export async function handleBusinessTeam(request, env, user, url) {
   const remove=path.match(/^\/api\/business\/team\/members\/([a-f0-9-]+)$/i);
   if(remove && request.method==="DELETE") {
     if(owner?.plan!=="business") return json({error:"Only the main Business account can remove members."},403);
-    const result=await env.DB.prepare("UPDATE business_team_memberships SET status='revoked' WHERE owner_user_id=? AND member_user_id=? AND status='active'").bind(user.id,remove[1]).run();
+    const result=await env.DB.prepare("DELETE FROM business_team_memberships WHERE owner_user_id=? AND member_user_id=? AND status='active'").bind(user.id,remove[1]).run();
     if(!Number(result?.meta?.changes||0)) return json({error:"Active team member not found."},404);
     return json({ok:true});
   }
