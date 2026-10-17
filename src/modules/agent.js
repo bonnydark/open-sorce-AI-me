@@ -126,8 +126,10 @@ export async function runAgent(env, conversation, options = {}) {
   let finalAnswer;
   try {
     modelCalls++;
-    const review = await env.AI.run(MODEL,{messages:[{role:"system",content:REVIEWER_SYSTEM},{role:"user",content:evidence}],max_tokens:1800});
-    finalAnswer = extractText(review);
+    finalAnswer = await coreChat(env, [
+      { role: "system", content: REVIEWER_SYSTEM },
+      { role: "user", content: evidence }
+    ], { max_tokens: 1800 });
   } catch {
     finalAnswer = String(decision.answer||first.answer||"I completed the planning step, but the final review step failed. Please retry.");
   }
