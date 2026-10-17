@@ -224,7 +224,7 @@ export default {
                       const gortMemories = await getGortMemories(env.DB, user.id);
                       if (Array.isArray(body.images) && body.images.length) {
                         // The configured self-hosted Gort endpoint may be text-only.
-                        // Route image-bearing requests through the existing vision-capable Workers AI path.
+                        // Route image-bearing requests through the configured self-hosted multimodal Core AI runtime.
                         reply = await generateReply(
                           env,
                           [...memoryContext, ...webContext, ...context],
