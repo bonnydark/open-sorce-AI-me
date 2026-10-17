@@ -187,7 +187,6 @@ export default {
                     const moduleProfiles = {
                       "ai-engine": { specialistMode: false, workspaceProfile: "general" },
                       "ai-agent": { specialistMode: false, workspaceProfile: "general", agentMode: true },
-                      "ai-agent": { specialistMode: false, workspaceProfile: "general", agentMode: true },
                       "gort": { specialistMode: true, workspaceProfile: "developer" },
                       "code-copilot": { specialistMode: true, workspaceProfile: "developer" },
                       "security-analyst": { specialistMode: true, workspaceProfile: "bug-bounty" },
