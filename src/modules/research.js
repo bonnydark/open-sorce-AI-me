@@ -1,14 +1,64 @@
 const json = (body, status = 200) => Response.json(body, { status });
 
 export async function searchWeb(env, query) {
-  if (!env.BRAVE_SEARCH_API_KEY) throw new Error("Live search is not configured. Add BRAVE_SEARCH_API_KEY as a Worker secret.");
-  const endpoint = new URL("https://api.search.brave.com/res/v1/web/search");
-  endpoint.searchParams.set("q", query);
-  endpoint.searchParams.set("count", "8");
-  const upstream = await fetch(endpoint, { headers: { "Accept": "application/json", "X-Subscription-Token": env.BRAVE_SEARCH_API_KEY }, signal: AbortSignal.timeout(10000) });
-  if (!upstream.ok) throw new Error("Search provider request failed (HTTP " + upstream.status + ").");
-  const data = await upstream.json();
-  return (data?.web?.results || []).slice(0, 8).map(item => ({ title: String(item.title || "").slice(0, 300), url: String(item.url || ""), description: String(item.description || "").slice(0, 1200), age: String(item.age || item.page_age || "").slice(0, 80) })).filter(item => { try { return ["https:", "http:"].includes(new URL(item.url).protocol); } catch { return false; } });
+  const cleanQuery = String(query || "").trim().slice(0, 300);
+  if (!cleanQuery) throw new Error("Enter a search query.");
+  const failures = [];
+
+  // Prefer Brave when configured, but fall back to public RSS search so the
+  // Agentic AI module remains useful when no paid/keyed search provider exists.
+  if (env.BRAVE_SEARCH_API_KEY) {
+    try {
+      const endpoint = new URL("https://api.search.brave.com/res/v1/web/search");
+      endpoint.searchParams.set("q", cleanQuery);
+      endpoint.searchParams.set("count", "8");
+      const upstream = await fetch(endpoint, {
+        headers: { "Accept": "application/json", "X-Subscription-Token": env.BRAVE_SEARCH_API_KEY },
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!upstream.ok) throw new Error("Brave Search HTTP " + upstream.status);
+      const data = await upstream.json();
+      const results = (data?.web?.results || []).slice(0, 8).map(item => ({
+        title: String(item.title || "").slice(0, 300),
+        url: String(item.url || ""),
+        description: String(item.description || "").slice(0, 1200),
+        age: String(item.age || item.page_age || "").slice(0, 80)
+      })).filter(item => {
+        try { return ["https:", "http:"].includes(new URL(item.url).protocol); } catch { return false; }
+      });
+      if (results.length) return results;
+      failures.push("Brave Search returned no results");
+    } catch (error) {
+      failures.push(String(error?.message || error).slice(0, 180));
+    }
+  }
+
+  const fallbacks = [
+    async () => {
+      const endpoint = new URL("https://www.bing.com/search");
+      endpoint.searchParams.set("q", cleanQuery);
+      endpoint.searchParams.set("format", "rss");
+      return await fetchNewsRss(endpoint, "Bing public RSS search");
+    },
+    async () => {
+      const endpoint = new URL("https://news.google.com/rss/search");
+      endpoint.searchParams.set("q", cleanQuery);
+      endpoint.searchParams.set("hl", "en-US");
+      endpoint.searchParams.set("gl", "US");
+      endpoint.searchParams.set("ceid", "US:en");
+      return await fetchNewsRss(endpoint, "Google News RSS");
+    }
+  ];
+  for (const attempt of fallbacks) {
+    try {
+      const results = await attempt();
+      if (results.length) return results;
+      failures.push("fallback returned no results");
+    } catch (error) {
+      failures.push(String(error?.message || error).slice(0, 180));
+    }
+  }
+  throw new Error("All public search providers are temporarily unavailable. " + failures.join("; "));
 }
 
 async function fetchNewsRss(url, provider) {
