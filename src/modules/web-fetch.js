@@ -10,6 +10,29 @@ function isBlockedHost(hostname) {
   }
   return false;
 }
+function decodeEntities(value) {
+  return value
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Math.min(0x10ffff, Number(n))))
+    .replace(/&#x([\da-f]+);/gi, (_, n) => String.fromCodePoint(Math.min(0x10ffff, parseInt(n, 16))));
+}
+function htmlToReadableText(source) {
+  const title = (source.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").replace(/<[^>]*>/g, " ");
+  const description = source.match(/<meta\b[^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']*)["'][^>]*>/i)?.[1] || "";
+  const body = source
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(script|style|noscript|svg|canvas|iframe|nav|footer|header|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<(br|hr)\b[^>]*>/gi, "\n")
+    .replace(/<\/(p|div|article|section|li|h[1-6]|tr|blockquote|main)\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+  const text = decodeEntities(body).replace(/[\t\f\v ]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return [title ? "Page title: " + decodeEntities(title).trim() : "", description ? "Page description: " + decodeEntities(description).trim() : "", text].filter(Boolean).join("\n\n").slice(0, 50000);
+}
 async function fetchGitHubRepository(url) {
   const match = url.pathname.match(/^\/([^/]+)\/([^/]+)\/?$/);
   if (url.hostname.toLowerCase() !== "github.com" || !match) return null;
@@ -60,11 +83,13 @@ export async function fetchPublicText(input, redirectCount = 0) {
     if (!location) throw new Error("Website redirected without a location.");
     const next = new URL(location, url);
     if (next.hostname !== url.hostname) throw new Error("Cross-host redirects are blocked. Open the final URL directly.");
+    if (next.protocol !== "https:" && next.protocol !== "http:" || isBlockedHost(next.hostname)) throw new Error("Redirect target is blocked for safety.");
     return fetchPublicText(next.toString(), redirectCount + 1);
   }
   if (!response.ok) throw new Error("Website returned HTTP " + response.status + ".");
   const type = response.headers.get("content-type") || "unknown";
   if (!/(text\/|application\/(json|javascript|xml|xhtml\+xml))/.test(type)) throw new Error("This endpoint is not a text/HTML/JSON response (" + type + ").");
-  const text = (await response.text()).slice(0, 80000);
+  const raw = (await response.text()).slice(0, 80000);
+  const text = /html|xhtml/i.test(type) ? htmlToReadableText(raw) : raw.slice(0, 50000);
   return { url: url.toString(), status: response.status, contentType: type, text };
 }
