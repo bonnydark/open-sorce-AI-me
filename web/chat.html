@@ -706,10 +706,10 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
    localAiStage='engine CDN';
    setLocalAiStatus('Loading local inference engine…');
    let webllm;
-   try{webllm=await import('https://esm.sh/@mlc-ai/web-llm@0.2.80')}
+   try{webllm=await import('https://esm.sh/@mlc-ai/web-llm@0.2.84')}
    catch(firstImportError){
     setLocalAiStatus('Switching to backup engine CDN…');
-    try{webllm=await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.80/+esm')}
+    try{webllm=await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.84/+esm')}
     catch(secondImportError){throw new Error('Both engine CDNs failed: '+(secondImportError?.message||firstImportError?.message||'network error'))}
    }
    const supportedModel=(webllm.prebuiltAppConfig?.model_list||[]).some(item=>item.model_id===localAiManifest.modelId);
