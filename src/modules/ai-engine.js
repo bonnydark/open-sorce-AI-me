@@ -131,7 +131,7 @@ When the user asks which mode/support they are currently using (for example, "wh
     const model = MODELS[settings.activeModule] || MODELS["ai-engine"];
     result = await aiBinding.run(model, {
       messages: [systemMessage, ...messages],
-      max_tokens: 1024
+      max_tokens: messages.some(item => item.role === "user" && item.content.includes("FILE EDIT TASK")) ? 4096 : 1024
     });
   }
   const reply = result?.response ?? result?.choices?.[0]?.message?.content;
