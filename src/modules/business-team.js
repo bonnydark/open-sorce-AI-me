@@ -30,7 +30,7 @@ async function teamPayload(db, ownerId, viewerId) {
   return {
     role: viewerId===ownerId ? "business(main)" : "business(add)",
     owner: { id:owner.id,email:owner.email,name:owner.name,plan:owner.plan },
-    members: members.results||[],
+    members: viewerId===ownerId ? (members.results||[]) : (members.results||[]).filter(member=>member.id===viewerId),
     totals: { requests:Number(total?.requests||0),images:Number(total?.images||0),estimatedCostUsd:Number(total?.estimatedCostUsd||0),pricedRequests:Number(total?.pricedRequests||0),limit:20000,remaining:Math.max(0,20000-Number(total?.requests||0)) },
     periodStart:start
   };
@@ -58,11 +58,12 @@ export async function handleBusinessTeam(request, env, user, url) {
     const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254) return json({error:"Enter a valid account email."},400);
     if(email===String(user.email).toLowerCase()) return json({error:"The main account cannot be added as its own member."},400);
-    const member=await env.DB.prepare("SELECT id,email,plan FROM users WHERE email=? COLLATE NOCASE").bind(email).first();
+    const member=await env.DB.prepare("SELECT id,email,plan,stripe_subscription_status FROM users WHERE email=? COLLATE NOCASE").bind(email).first();
     if(!member) return json({error:"No account exists for this email yet. Ask them to register first, then add their email again."},404);
     const currentOwner=await getMembership(env.DB,member.id);
     if(currentOwner) return json({error:"This account already belongs to a Business team. Remove it from that team before adding it here."},409);
     if(member.plan==="business") return json({error:"An account with its own Business plan cannot be added as a secondary member."},409);
+    if(member.plan==="pro" && ["active","trialing"].includes(member.stripe_subscription_status)) return json({error:"This account has an active Pro subscription. They must cancel or finish that subscription before joining a shared Business team to avoid duplicate billing."},409);
     try {
       await env.DB.prepare("INSERT INTO business_team_memberships (id,owner_user_id,member_user_id,invited_email,status) VALUES (?,?,?,?,'active')")
         .bind(crypto.randomUUID(),user.id,member.id,email).run();
