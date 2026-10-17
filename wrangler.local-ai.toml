@@ -1,0 +1,11 @@
+name = "gortgpt-local-ai"
+main = "src/local-ai-worker.js"
+compatibility_date = "2026-10-13"
+workers_dev = true
+
+[assets]
+directory = "./web/local-ai"
+binding = "ASSETS"
+not_found_handling = "none"
+html_handling = "auto"
+run_worker_first = ["/api/*"]
