@@ -68,7 +68,7 @@ export default {
         response = json({ ok: true, service: "gortgpt", ai: Boolean(env.CORE_AI_URL), database: Boolean(env.DB) });
       }
       else if (url.pathname === "/api/local-ai/manifest" && request.method === "GET") {
-        response = json({ ok: true, service: "gortgpt-browser-local-ai", manifestVersion: 1, modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", modelVersion: "qwen25-05b-q4f16-r1", enginePackage: "@mlc-ai/web-llm", engineVersion: "0.2.80", cacheBackend: "cache", updatedAt: "2026-10-17" });
+        response = json({ ok: true, service: "gortgpt-browser-local-ai", manifestVersion: 1, modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", modelVersion: "qwen25-05b-q4f16-r1", enginePackage: "@mlc-ai/web-llm", engineVersion: "0.2.84", cacheBackend: "cache", updatedAt: "2026-10-17" });
       }
       else if ((url.pathname.startsWith("/api/local-ai/model/") || url.pathname === "/api/local-ai/model-lib") && (request.method === "GET" || request.method === "HEAD")) {
         let upstreamUrl;
@@ -77,7 +77,7 @@ export default {
           if (!/^Qwen2\.5-0\.5B-Instruct-q4f16_1_[A-Za-z0-9._-]+\.wasm$/.test(name)) {
             response = json({ error: "Unsupported Local AI model library." }, 400);
           } else {
-            upstreamUrl = "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/base/" + name;
+            upstreamUrl = "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_84/base/" + name;
           }
         } else {
           const match = url.pathname.match(/^\/api\/local-ai\/model\/resolve\/main\/([A-Za-z0-9._-]+)$/);
