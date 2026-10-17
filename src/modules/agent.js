@@ -1,3 +1,5 @@
+import { searchWeb } from "./research.js";
+import { fetchPublicText } from "./web-fetch.js";
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const MAX_TOOL_STEPS = 4;
 const SYSTEM = `You are GortGPT Agent, an agentic assistant that plans and executes multi-step tasks using only the read-only tools provided by the host.
