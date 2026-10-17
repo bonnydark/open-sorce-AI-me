@@ -24,7 +24,7 @@ const allowedHumor = new Set(["off", "low", "medium", "high"]);
 const allowedResearch = new Set(["off", "on-demand", "proactive"]);
 function safeCustomStyle(value) { return typeof value === "string" ? value.replace(/[<>]/g, "").trim().slice(0, 500) : ""; }
 const allowedProfiles = new Set(["general", "bug-bounty", "developer", "student"]);
-const allowedModules = new Set(["ai-engine", "code-copilot", "security-analyst", "study-tutor", "vision-ai", "gort"]);
+const allowedModules = new Set(["ai-engine", "ai-agent", "code-copilot", "security-analyst", "study-tutor", "vision-ai", "gort"]);
 function cleanSettings(input = {}) {
   const rawColors = input.customColors && typeof input.customColors === "object" && !Array.isArray(input.customColors) ? input.customColors : {};
   const color = (key, fallback) => typeof rawColors[key] === "string" && /^#[0-9a-fA-F]{6}$/.test(rawColors[key]) ? rawColors[key].toLowerCase() : fallback;
