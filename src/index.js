@@ -248,6 +248,11 @@ export default {
           return env.ASSETS.fetch(new Request(adminUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
         }
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
+        if (url.pathname === "/help" || url.pathname === "/help/") {
+          const helpUrl = new URL("/help.html", url.origin);
+          helpUrl.search = url.search;
+          return env.ASSETS.fetch(new Request(helpUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
+        }
         if (url.pathname === "/billing" || url.pathname === "/billing/") {
           const assetUrl = new URL("/billing.html", url.origin);
           assetUrl.search = url.search;
