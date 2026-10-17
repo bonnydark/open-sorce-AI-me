@@ -189,14 +189,20 @@ export async function handlePublicAiApi(request, env, url) {
     };
     const moduleSettings = { ...settings, ...profiles[moduleId], activeModule: moduleId };
     let reply;
-    if (moduleId === "ai-agent") reply = await runAgent(env, enriched, { maxSteps: 4 });
+    let agentModelCalls = 1;
+    if (moduleId === "ai-agent") {
+      const agentResult = await runAgent(env, enriched, { maxSteps: 4 });
+      reply = agentResult.reply;
+      agentModelCalls = agentResult.modelCalls;
+    }
     else if (moduleId === "gort") reply = await generateGortReply(env, enriched, moduleSettings, await getGortMemories(env.DB, user.id));
     else if (moduleId === "code-copilot") reply = await generateCodeCopilotReply(env.AI, enriched, moduleSettings);
     else if (moduleId === "security-analyst" || moduleId === "study-tutor") reply = await generateSpecialistReply(env.AI, moduleId, enriched, moduleSettings);
     else reply = await generateReply(env.AI, enriched, moduleSettings);
     const inputCharacters = totalChars;
     const outputCharacters = String(reply || "").length;
-    const estimatedCostUsd = estimateCost(env, 0);
+    const baseEstimatedCost = estimateCost(env, 0);
+    const estimatedCostUsd = moduleId === "ai-agent" && baseEstimatedCost !== null ? baseEstimatedCost * agentModelCalls : baseEstimatedCost;
     try { await recordUsage(env.DB, user.id, { moduleId, modelId: moduleModels[moduleId], inputCharacters, imageCount: 0, estimatedCostUsd }); } catch {}
     try { await env.DB.prepare("INSERT INTO api_token_usage (id,token_id,user_id,model_id,input_characters,output_characters,estimated_cost_usd) VALUES (?,?,?,?,?,?,?)").bind(crypto.randomUUID(),user.tokenId,user.id,moduleId,inputCharacters,outputCharacters,estimatedCostUsd).run(); } catch {}
     return json({
