@@ -15,6 +15,7 @@ import { handleUsage, recordUsage, checkPlanQuota } from "./modules/usage.js";
 import { handleResearchSearch, searchWeb } from "./modules/research.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 import { handleBilling, handleStripeWebhook } from "./modules/billing.js";
+import { handleAdminApi, isAdminUser } from "./modules/admin.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -56,7 +57,9 @@ export default {
         else {
           const user = await getSessionUser(request, env);
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
-          else if (url.pathname.startsWith("/api/billing/")) {
+          else if (url.pathname.startsWith("/api/admin/")) {
+            response = await handleAdminApi(request, env, user, url);
+          } else if (url.pathname.startsWith("/api/billing/")) {
             response = await handleBilling(request, env, user, url);
           } else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
             response = json({ error: "Monthly AI request limit reached. Your usage resets at the start of next month.", code: "PLAN_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
@@ -194,6 +197,13 @@ export default {
           } else response = json({ error: "Not found." }, 404);
         }
       } else {
+        // Admin HTML is served only after checking the authenticated account against ADMIN_EMAIL.
+        if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html") {
+          const adminUser = await getSessionUser(request, env);
+          if (!isAdminUser(adminUser, env)) return new Response("Not found.", { status: 404 });
+          const adminUrl = new URL("/admin.html", url.origin);
+          return env.ASSETS.fetch(new Request(adminUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
+        }
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
         if (url.pathname === "/billing" || url.pathname === "/billing/") {
           const assetUrl = new URL("/billing.html", url.origin);
