@@ -199,7 +199,12 @@ export default {
                     let reply;
                     let agentModelCalls = 1;
                     if (moduleId === "grot-o1") {
-                      const coreResult = await generateGrotO1Reply(env, [...memoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
+                      await learnGortMemory(env.DB, user.id, message, settings.autoMemories === true);
+                      const gortMemories = await getGortMemories(env.DB, user.id);
+                      const gortMemoryContext = gortMemories.length
+                        ? [{ role: "system", content: "GROT-O1 ACCOUNT MEMORY (private, account-scoped; use only when relevant):\\n- " + gortMemories.map(item => item.content).join("\\n- ") }]
+                        : [];
+                      const coreResult = await generateGrotO1Reply(env, [...memoryContext, ...gortMemoryContext, ...webContext, ...context], moduleSettings, Array.isArray(body.images) ? body.images : []);
                       reply = typeof coreResult === "string" ? coreResult : coreResult.reply;
                       agentModelCalls = Number(coreResult?.modelCalls) || 1;
                     } else if (moduleId === "ai-agent" && !(Array.isArray(body.images) && body.images.length)) {
