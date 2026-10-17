@@ -295,7 +295,71 @@ body.custom-colors-enabled .osintform button,
 body.custom-colors-enabled .supportactions .primary{background:linear-gradient(135deg,var(--accent),var(--accent2))!important;color:#fff!important}
 body.custom-colors-enabled .pill{border-color:var(--line)!important;color:var(--text)!important}
 @media(max-width:520px){.colorgrid{grid-template-columns:1fr}}
-.quota-card{border:1px solid var(--line);border-radius:14px;padding:15px;margin:0 0 14px;background:linear-gradient(145deg,#171313,#0c0d0c)}.quota-top,.quota-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.quota-top strong{display:block;font-size:18px;margin-top:4px}.quota-badge{font-size:12px;font-weight:800;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:5px 9px}.quota-track{height:10px;margin:13px 0 9px;border-radius:99px;overflow:hidden;background:#302020;border:1px solid var(--line)}.quota-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .25s ease}.quota-bottom{font-size:12px;color:var(--muted)}.quota-note{font-size:11px;color:var(--muted);margin:9px 0 0}@media(max-width:520px){.quota-card{padding:12px}.quota-top strong{font-size:16px}}</style>
+.quota-card{border:1px solid var(--line);border-radius:14px;padding:15px;margin:0 0 14px;background:linear-gradient(145deg,#171313,#0c0d0c)}.quota-top,.quota-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.quota-top strong{display:block;font-size:18px;margin-top:4px}.quota-badge{font-size:12px;font-weight:800;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:5px 9px}.quota-track{height:10px;margin:13px 0 9px;border-radius:99px;overflow:hidden;background:#302020;border:1px solid var(--line)}.quota-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .25s ease}.quota-bottom{font-size:12px;color:var(--muted)}.quota-note{font-size:11px;color:var(--muted);margin:9px 0 0}@media(max-width:520px){.quota-card{padding:12px}.quota-top strong{font-size:16px}}
+/* GortGPT UI refresh — red/ember visual system */
+:root{
+ --bg:#070708;--panel:#101012;--line:#302326;--text:#f5f2f1;--muted:#a49a9a;
+ --accent:#ff4d35;--accent2:#ff8a3d;--glow:#ff4d3538;
+ --surface:#121113;--surface-raised:#191619;--danger:#ff5b66;
+}
+body{background:radial-gradient(ellipse at 78% -5%,#39130f 0,transparent 33%),radial-gradient(ellipse at 5% 85%,#21100f 0,transparent 32%),var(--bg);letter-spacing:.005em}
+button,input,textarea,select{accent-color:var(--accent)}
+button{transition:background .18s ease,border-color .18s ease,transform .18s ease,filter .18s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+.shell{max-width:1800px;grid-template-columns:66px 270px minmax(0,1fr);gap:0}
+.feature-rail{position:sticky;top:0;height:100vh;padding:18px 9px;display:flex;flex-direction:column;align-items:center;gap:9px;background:#090809;border-right:1px solid var(--line);z-index:30}
+.railbrand{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#ff6b3d,#d9272e);color:white;font-weight:950;box-shadow:0 8px 28px #ff4d3525;margin-bottom:14px}
+.railbtn{width:46px;min-height:46px;border-radius:14px;border:1px solid transparent;background:transparent;color:#b9aeb0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:18px}
+.railbtn span{font-size:9px;font-weight:700;letter-spacing:.01em}
+.railbtn:hover,.railbtn:focus-visible{background:#241311;border-color:#633026;color:#fff;transform:translateY(-1px)}
+.side{position:sticky;top:0;height:100vh;max-height:100vh;overflow:hidden;padding:20px 14px;background:linear-gradient(180deg,#100d0e,#0a090a);border-right:1px solid var(--line)}
+.brand{letter-spacing:-.02em}.logo{background:linear-gradient(135deg,#ff6b3d,#d9272e);box-shadow:0 0 25px #ff4d3529}.tag{margin-bottom:18px;color:#bd7770}
+.newchat,.secondary,.authbtn{background:linear-gradient(135deg,#301411,#1b0d0d);border-color:#71352b;color:#fff4f0;border-radius:12px}
+.newchat:hover,.secondary:hover,.authbtn:hover{border-color:var(--accent);filter:brightness(1.15)}
+.chatsearch{background:#100e10!important;border:1px solid #302326!important;border-radius:11px!important;color:var(--text)!important}
+.history{max-height:none;flex:1;min-height:0;margin-top:7px;padding-right:2px}
+.chatlink{color:#c9bfc0;border-radius:10px;padding:10px}
+.chatlink:hover,.chatlink.active{background:#251311;border-color:#633026;color:#fff}
+.deletechat{border-color:#5b2929;color:#ffb6a8}
+.sidebottom{padding-top:12px}.account{border-color:#2c2022}
+.main{min-width:0;padding:25px clamp(16px,3vw,42px) 36px}
+.top{padding:4px 0 20px;border-bottom:1px solid #2b2022;align-items:center}
+.eyebrow,.navlabel,.smallcap{color:#e68a72;letter-spacing:.15em}
+.top h1{font-size:clamp(24px,3vw,34px);letter-spacing:-.045em}
+.sub{color:#a99b9c}
+.pill{border-color:#633026;background:#21110f;color:#ffb49a;border-radius:999px}
+.grid{gap:12px;margin:18px 0 22px}
+.metric,.card,.panel,.modal-card,.settings-card{background:linear-gradient(145deg,#171416,#0e0c0e);border-color:#302326;border-radius:16px;box-shadow:0 10px 30px #0002}
+.metric{padding:16px}.metric strong{font-size:16px}.tiny{color:#a99b9c}
+.chatbox{border:1px solid #38272a;border-radius:20px;background:linear-gradient(180deg,#100e10,#0a090a);box-shadow:0 24px 70px #0004;overflow:hidden}
+.chathead{padding:17px 20px;border-bottom:1px solid #2b2022;background:#121012}
+.chathead h2{letter-spacing:-.03em}.chathead p{color:#a99b9c}
+.messages,.conversation,.chatmessages{scrollbar-color:#633026 transparent}
+.message,.bubble{border-radius:16px}
+.message.user,.user-message{background:#281411;border-color:#673126}
+.message.assistant,.assistant-message{background:#141214;border-color:#302326}
+textarea,.composer textarea,.chat-input, input,select{border-color:#38272a}
+textarea:focus,input:focus,select:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px #ff4d3519}
+.send,.sendbtn,.primary,.supportactions .primary{background:linear-gradient(135deg,#ff613d,#e42e35)!important;color:#fff!important;border:0!important;box-shadow:0 6px 22px #ff4d3526}
+.send:hover,.sendbtn:hover,.primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.toolbtn,.iconbtn,.pillbtn{background:#171214;border:1px solid #3c292b;color:#e5d7d6;border-radius:11px}
+.toolbtn:hover,.iconbtn:hover,.pillbtn:hover{background:#2a1513;border-color:#71352b;color:#fff}
+.modal,.settings-modal,.overlay{backdrop-filter:blur(12px)}
+.modal-card,.settings-panel,.settings-content{background:#100e10;border-color:#3a292b;border-radius:20px}
+.tab,.setting-tab{border-radius:10px}
+.tab.active,.setting-tab.active{background:#2a1513;border-color:#71352b;color:#fff}
+.quota-card{background:linear-gradient(145deg,#1d1112,#100d0f);border-color:#4b292b;border-radius:16px}
+.quota-track{background:#302023;border-color:#4b292b}.quota-fill{background:linear-gradient(90deg,#ff4d35,#ff9a48)}
+.quota-badge{color:#ffb49a;border-color:#633026;background:#21110f}
+.status,.empty,.empty-state{color:#a99b9c}
+a{color:#ff9a78}
+pre,code,.codeblock{border-color:#352326}
+@media(min-width:1500px){.main{padding-left:44px;padding-right:44px}.chatbox{max-width:1380px}}
+@media(max-width:900px){.shell{grid-template-columns:56px minmax(0,1fr)}.side{position:fixed;left:56px;top:0;bottom:0;width:min(310px,calc(100vw - 70px));height:100dvh;z-index:45;transform:translateX(-115%);transition:transform .22s ease;box-shadow:18px 0 60px #0008}.shell.nav-open .side,.side.open{transform:translateX(0)}.main{padding:18px 16px 28px}.feature-rail{width:56px;padding:12px 5px}.railbtn{width:42px;min-height:43px}}
+@media(max-width:600px){.main{padding:12px 10px 22px}.top{gap:10px;align-items:flex-start}.top h1{font-size:25px}.grid{grid-template-columns:1fr 1fr}.metric{padding:12px}.metric:last-child{grid-column:1/-1}.chathead{padding:14px}.chatbox{border-radius:15px}.chathead-tools{gap:5px}.toolbtn{min-height:38px}.quota-card{padding:12px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+</style>
 </head>
 <body>
 <div class="shell">
