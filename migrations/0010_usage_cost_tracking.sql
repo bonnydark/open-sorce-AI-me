@@ -1,4 +1,4 @@
--- Add model identity and estimated provider cost to usage events.
--- Safe for databases created by migration 0009_admin_tokens.sql.
-ALTER TABLE usage_events ADD COLUMN model_id TEXT NOT NULL DEFAULT 'unknown';
-ALTER TABLE usage_events ADD COLUMN estimated_cost_usd REAL;
+-- Compatibility migration: some production databases already have model_id.
+-- The usage module inspects PRAGMA table_info and adds whichever tracking columns
+-- are missing, avoiding duplicate-column failures across existing installations.
+SELECT 1;
