@@ -15,6 +15,7 @@ import { handleUsage, recordUsage, checkPlanQuota } from "./modules/usage.js";
 import { handleResearchSearch, searchWeb } from "./modules/research.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 import { handleBilling, handleStripeWebhook } from "./modules/billing.js";
+import { handleBusinessTeam } from "./modules/business-team.js";
 import { handleAdminApi, isAdminUser } from "./modules/admin.js";
 import { handleApiTokens, handlePublicAiApi } from "./modules/api-tokens.js";
 
@@ -78,6 +79,8 @@ export default {
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
           else if (url.pathname.startsWith("/api/admin/")) {
             response = await handleAdminApi(request, env, user, url);
+          } else if (url.pathname.startsWith("/api/business/")) {
+            response = await handleBusinessTeam(request, env, user, url);
           } else if (url.pathname === "/api/keys" || /^\/api\/keys\/[a-f0-9-]+(?:\/(?:reveal|usage|settings))?$/i.test(url.pathname)) {
             response = await handleApiTokens(request, env, user, url);
           } else if (url.pathname.startsWith("/api/billing/")) {
@@ -252,6 +255,11 @@ export default {
           const helpUrl = new URL("/help.html", url.origin);
           helpUrl.search = url.search;
           return env.ASSETS.fetch(new Request(helpUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
+        }
+        if (url.pathname === "/business/team" || url.pathname === "/business/team/") {
+          const teamUrl = new URL("/business-team.html", url.origin);
+          teamUrl.search = url.search;
+          return env.ASSETS.fetch(new Request(teamUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
         }
         if (url.pathname === "/billing" || url.pathname === "/billing/") {
           const assetUrl = new URL("/billing.html", url.origin);
