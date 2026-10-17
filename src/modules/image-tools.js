@@ -9,7 +9,27 @@ export async function handleImageGeneration(request, env, user) {
   if (!prompt) return json({ error: "Describe the image you want to create." }, 400);
   if (prompt.length > 1500) return json({ error: "Image prompt must be 1,500 characters or fewer." }, 413);
   try {
-    const result = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt });
+    // Convert the user's request into a clear visual prompt for Flux. Keep any
+    // requested words exactly in the language the user asked for; do not invent
+    // Chinese/Japanese/Korean text or add captions that were not requested.
+    let imagePrompt = prompt;
+    try {
+      const enhanced = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          {
+            role: "system",
+            content: "You rewrite user requests into concise, detailed prompts for an image-generation model. Understand the user's language and preserve their intent. Return only the final image prompt, preferably in clear English for visual composition. CRITICAL: If the user asks for any visible text, preserve the exact requested wording and its original language in quotation marks, and explicitly instruct the image model to render only that exact text. Never add Chinese, Japanese, Korean, or any other writing unless explicitly requested. If no visible text was requested, explicitly say there must be no letters, words, captions, logos, or watermarks. Preserve requested names, numbers, and phrases exactly. Do not answer the user or explain your work."
+          },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 512
+      });
+      const candidate = typeof enhanced?.response === "string" ? enhanced.response.trim() : "";
+      if (candidate && candidate.length <= 2500) imagePrompt = candidate;
+    } catch {
+      // Keep the original request if the prompt-rewriter model is unavailable.
+    }
+    const result = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt: imagePrompt });
     let image = result?.image;
     if (image instanceof ArrayBuffer) image = btoa(String.fromCharCode(...new Uint8Array(image)));
     else if (image instanceof Uint8Array) {
