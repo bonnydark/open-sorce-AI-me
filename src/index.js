@@ -33,7 +33,12 @@ function configuredUsageCost(env, imageCount) {
 function corsHeaders(request) {
   const origin = request.headers.get("Origin");
   const headers = new Headers({ "Vary": "Origin" });
-  if (origin && new URL(request.url).origin === origin) {
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/v1/")) {
+    headers.set("Access-Control-Allow-Origin", "*");
+    headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Authorization,Content-Type");
+  } else if (origin && url.origin === origin) {
     headers.set("Access-Control-Allow-Origin", origin);
     headers.set("Access-Control-Allow-Credentials", "true");
     headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
