@@ -681,7 +681,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
    let i=0;const tick=()=>{const next=Math.min(i+1,part.value.length);target.textContent+=part.value.slice(i,next);i=next;messages.scrollTop=messages.scrollHeight;if(i<part.value.length)setTimeout(tick,preferences.typewriterSpeed||0);else typeNext()};tick();
   };typeNext();
  }
- let localAiEngine=null,localAiLoading=false,localAiEnabled=false,localAiManifest=null;
+ let localAiEngine=null,localAiLoading=false,localAiEnabled=false,localAiManifest=null,localAiAutoStartRequested=false;
  let localAiStage='idle';
  const localAiButton=$('localAiToggle'),localAiStatus=$('localAiStatus');
  function setLocalAiStatus(message){if(localAiStatus)localAiStatus.textContent=message}
@@ -692,39 +692,57 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
   if(!manifest?.ok||!manifest.modelId||!manifest.engineVersion)throw new Error('The server returned an invalid Local AI manifest.');
   return manifest;
  }
- if(localAiButton)localAiButton.addEventListener('click',async()=>{
+ async function startLocalAI(options={}){
+  const automatic=Boolean(options.automatic);
   if(localAiLoading)return;
-  if(localAiEngine){localAiEnabled=!localAiEnabled;localAiButton.textContent=localAiEnabled?'⚡ Local AI: ON':'⚡ Local AI: OFF';localAiButton.classList.toggle('local-ai-active',localAiEnabled);setLocalAiStatus(localAiEnabled?'Local AI is active. Text prompts and replies use the model on this device.':'Local AI paused. GortGPT module routing is active.');return}
-  if(!('gpu'in navigator)){setLocalAiStatus('WebGPU is unavailable. Use an updated Chrome/Edge browser and check chrome://gpu.');return}
-  localAiLoading=true;localAiButton.disabled=true;localAiButton.textContent='Checking Local AI…';
+  if(localAiEngine){localAiEnabled=true;if(localAiButton){localAiButton.textContent='⚡ Local AI: ON';localAiButton.classList.add('local-ai-active')}setLocalAiStatus('Local AI is ready on this device.');return}
+  if(!('gpu'in navigator)){setLocalAiStatus('This browser has no WebGPU. GortGPT will continue automatically with its standard AI module.');if(localAiButton)localAiButton.textContent='⚡ Local AI unavailable';return}
+  localAiLoading=true;if(localAiButton){localAiButton.disabled=true;localAiButton.textContent='⚡ Starting Local AI…'}
+  let lastError=null;
   try{
    localAiStage='server manifest';
-   setLocalAiStatus('Step 1/4: Checking the recommended model and version with GortGPT…');
+   setLocalAiStatus('Checking model version and local setup…');
    localAiManifest=await getLocalAiManifest();
    localAiStage='engine CDN';
-   setLocalAiStatus('Step 2/4: Loading WebLLM engine '+localAiManifest.engineVersion+'…');
+   setLocalAiStatus('Loading local inference engine…');
    let webllm;
    try{webllm=await import('https://esm.sh/@mlc-ai/web-llm@0.2.80')}
    catch(firstImportError){
-    setLocalAiStatus('Primary engine CDN failed; trying backup CDN…');
+    setLocalAiStatus('Switching to backup engine CDN…');
     try{webllm=await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.80/+esm')}
-    catch(secondImportError){throw new Error('Could not download WebLLM from either CDN. Check extensions, firewall, or access to esm.sh / jsdelivr. Details: '+(secondImportError?.message||firstImportError?.message||'CDN fetch failed'))}
+    catch(secondImportError){throw new Error('Both engine CDNs failed: '+(secondImportError?.message||firstImportError?.message||'network error'))}
    }
-   localAiStage='model cache/download';
-   setLocalAiButtonLabel('Loading Local AI…');
-   setLocalAiStatus('Step 3/4: Checking this browser’s saved model cache. If it is missing or incomplete, WebLLM will download the required files again.');
+   const supportedModel=(webllm.prebuiltAppConfig?.model_list||[]).some(item=>item.model_id===localAiManifest.modelId);
+   if(!supportedModel)throw new Error('The configured model '+localAiManifest.modelId+' is not included in this WebLLM engine version. Update the model manifest.');
    const appConfig={...webllm.prebuiltAppConfig,cacheBackend:'cache'};
-   localAiEngine=await webllm.CreateMLCEngine(localAiManifest.modelId,{appConfig,initProgressCallback:report=>setLocalAiStatus((report?.text||'Preparing model…')+' · '+localAiManifest.modelVersion)});
-   localAiStage='ready';
-   localAiEnabled=true;localAiButton.textContent='⚡ Local AI: ON';localAiButton.classList.add('local-ai-active');
-   setLocalAiStatus('Ready. Model version '+localAiManifest.modelVersion+' is loaded. Future visits reuse the browser cache when it remains available; if deleted, missing model files are downloaded again.');
+   for(let attempt=1;attempt<=2;attempt++){
+    try{
+     localAiStage='model cache/download';
+     setLocalAiStatus(attempt===1?'Checking saved model files; downloading missing files automatically…':'Retrying the model download automatically (attempt 2/2)…');
+     localAiEngine=await webllm.CreateMLCEngine(localAiManifest.modelId,{appConfig,initProgressCallback:report=>{
+      const progress=typeof report?.progress==='number'?' '+Math.round(report.progress*100)+'%':'';
+      setLocalAiStatus((report?.text||'Preparing local model…')+progress+' · attempt '+attempt+'/2');
+     }});
+     lastError=null;break;
+    }catch(error){lastError=error;localAiEngine=null;if(attempt<2)await new Promise(resolve=>setTimeout(resolve,1200))}
+   }
+   if(!localAiEngine)throw lastError||new Error('The model could not be initialized.');
+   localAiStage='ready';localAiEnabled=true;
+   if(localAiButton){localAiButton.textContent='⚡ Local AI: ON';localAiButton.classList.add('local-ai-active')}
+   setLocalAiStatus('Local AI is ready. Chat will switch to this device automatically; saved model files are reused on future visits when the browser keeps its cache.');
   }catch(error){
-   localAiEngine=null;localAiEnabled=false;localAiButton.textContent='⚡ Local AI: OFF';
+   localAiEngine=null;localAiEnabled=false;
+   if(localAiButton){localAiButton.textContent='⚡ Retry Local AI';localAiButton.classList.remove('local-ai-active')}
    const detail=error?.message||String(error);
-   setLocalAiStatus('Local AI failed during '+localAiStage+': '+detail+'. If during model download, allow access to model files and ensure enough free RAM/VRAM. If during engine CDN, allow esm.sh and jsdelivr. Open DevTools → Console for details.');
-  }finally{localAiLoading=false;localAiButton.disabled=false}
+   console.error('[GortGPT Local AI]',localAiStage,error);
+   setLocalAiStatus('Local AI could not start ('+localAiStage+'). GortGPT has automatically kept the standard AI active, so you can continue chatting. The app will retry Local AI on the next visit. '+detail);
+  }finally{localAiLoading=false;if(localAiButton)localAiButton.disabled=false}
+ }
+ if(localAiButton)localAiButton.addEventListener('click',async()=>{
+  if(localAiLoading)return;
+  if(localAiEngine){localAiEnabled=!localAiEnabled;localAiButton.textContent=localAiEnabled?'⚡ Local AI: ON':'⚡ Local AI: OFF';localAiButton.classList.toggle('local-ai-active',localAiEnabled);setLocalAiStatus(localAiEnabled?'Local AI is active. Text prompts and replies use the model on this device.':'Local AI paused. Standard GortGPT AI is active.');return}
+  await startLocalAI({automatic:false});
  });
- function setLocalAiButtonLabel(label){if(localAiButton)localAiButton.textContent=label}
  async function loadModule(moduleId=preferences.activeModule||'ai-engine'){
   try{const response=await fetch('https://cdn.jsdelivr.net/gh/'+OWNER+'/'+REPO+'@'+BRANCH+'/source/loader.js',{cache:'no-store'});if(!response.ok)throw new Error('Loader HTTP '+response.status);const source=await response.text();const blob=URL.createObjectURL(new Blob([source+'\n//# sourceURL=ai-module-loader.js'],{type:'text/javascript'}));try{const loader=await import(blob);activeModule=await loader.loadModule({rawBase,moduleId})}finally{URL.revokeObjectURL(blob)}
    $('moduleStatus').textContent='MODULE READY';$('modelState').textContent=activeModule.name||'AI module';
@@ -735,7 +753,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
  $('authForm').addEventListener('submit',async event=>{event.preventDefault();$('authSubmit').disabled=true;$('authMessage').textContent='Working…';try{const body={email:$('email').value,password:$('password').value};if(authMode==='register')body.name=$('displayName').value;const data=await api('/api/auth/'+authMode,{method:'POST',body:JSON.stringify(body)});currentUser=data.user;await enterWorkspace()}catch(error){$('authMessage').textContent=error.message}finally{$('authSubmit').disabled=false}});
  async function loadSharedView(token){sharedViewToken=token;document.body.classList.add('share-view');$('authGate').classList.add('hidden');$('settingsGate').classList.add('hidden');$('buildStatus').textContent='READ-ONLY SHARE';$('moduleStatus').textContent='VIEW ONLY';$('pageTitle').textContent='Shared conversation';$('pageSubtitle').textContent='This link only shows messages explicitly shared by the owner.';$('chatSubtitle').textContent='Read-only shared chat';$('chatForm').classList.add('hidden');$('shareChat').classList.add('hidden');$('revokeShare').classList.add('hidden');$('side')?.classList.add('hidden');try{const data=await api('/api/shared/'+token);$('chatSubtitle').textContent=data.chat.title||'Shared conversation';messages.replaceChildren();for(const item of data.chat.messages)addMessage(item.role==='user'?'USER':'AI',item.content,item.role==='user'?'user':'');if(!data.chat.messages.length)showEmpty('This shared conversation has no messages.')}catch(error){showEmpty(error.message);$('chatSubtitle').textContent='Share unavailable'}}
  async function checkSession(){const share=location.pathname.match(/^\/(?:chat\/share|share)\/([a-f0-9]{64})\/?$/i);if(share){await loadSharedView(share[1]);return}try{const data=await api("/api/auth/me");if(data.user){currentUser=data.user;await enterWorkspace()}else{$("authGate").classList.remove("hidden");$("storageState").textContent="Sign in required";$("buildStatus").textContent="SIGNED OUT"}}catch(error){$("authMessage").textContent=error.message;$("storageState").textContent="Database not ready";$("buildStatus").textContent="SETUP REQUIRED"}}
- async function enterWorkspace(){ $('authGate').classList.add('hidden');$('accountName').textContent=currentUser.name||currentUser.email;$('accountEmail').textContent=currentUser.email;$('avatar').textContent=(currentUser.name||currentUser.email).slice(0,1).toUpperCase();$('storageState').textContent='Account history';$('buildStatus').textContent='SIGNED IN';input.disabled=false;send.disabled=false;$('chatSubtitle').textContent='Private chat history · Signed in as '+currentUser.email;try{await loadSettings()}catch(error){$('settingStatus').textContent=error.message}if(location.pathname==='/'||location.pathname==='/index.html')history.replaceState({},'', '/'+slugify(currentUser.name||currentUser.email.split('@')[0]));await loadChats(); }
+ async function enterWorkspace(){ $('authGate').classList.add('hidden');$('accountName').textContent=currentUser.name||currentUser.email;$('accountEmail').textContent=currentUser.email;$('avatar').textContent=(currentUser.name||currentUser.email).slice(0,1).toUpperCase();$('storageState').textContent='Account history';$('buildStatus').textContent='SIGNED IN';input.disabled=false;send.disabled=false;$('chatSubtitle').textContent='Private chat history · Signed in as '+currentUser.email;try{await loadSettings()}catch(error){$('settingStatus').textContent=error.message}if(location.pathname==='/'||location.pathname==='/index.html')history.replaceState({},'', '/'+slugify(currentUser.name||currentUser.email.split('@')[0]));await loadChats();if(!localAiAutoStartRequested){localAiAutoStartRequested=true;setLocalAiStatus('Starting Local AI in the background. Standard AI remains available while model files load…');void startLocalAI({automatic:true})} }
  function renderChatList(chats, historyNode=$('history')){historyNode.replaceChildren();const query=($('chatSearch')?.value||'').trim().toLowerCase();chats=chats.filter(chat=>!query||(chat.title||'New chat').toLowerCase().includes(query));if(!chats.length){const empty=document.createElement('div');empty.className='status';empty.textContent=query?'No matching conversations.':'Your conversations will appear here.';historyNode.append(empty);return}for(const chat of chats){const item=document.createElement('div');item.className='chatitem';const b=document.createElement('button');b.className='chatlink'+(chat.id===activeChatId?' active':'');b.textContent=chat.title||'New chat';b.title=chat.title;b.addEventListener('click',()=>openChat(chat.id,true));const del=document.createElement('button');del.className='deletechat';del.type='button';del.title='Delete conversation';del.setAttribute('aria-label','Delete '+(chat.title||'conversation'));del.textContent='✕';del.addEventListener('click',async e=>{e.stopPropagation();if(!confirm('Delete this conversation and all its messages?'))return;try{await api('/api/chats/'+chat.id,{method:'DELETE'});if(activeChatId===chat.id){activeChatId=null;activeChatTitle='';if(activeModule?.setConversation)activeModule.setConversation(null);showWelcome();history.replaceState({},'', '/'+slugify(currentUser?.name||currentUser?.email?.split('@')[0]||'user'));$('chatSubtitle').textContent='New private conversation'}await loadChatButtonsOnly()}catch(error){alert(error.message)}});item.append(b,del);historyNode.append(item)}}
  async function loadChats(selectFirst=false){try{const data=await api('/api/chats');const history=$('history');history.replaceChildren();if(!data.chats.length){const empty=document.createElement('div');empty.className='status';empty.textContent='Your conversations will appear here.';history.append(empty);activeChatId=null;showWelcome();return}
   renderChatList(data.chats,history)
