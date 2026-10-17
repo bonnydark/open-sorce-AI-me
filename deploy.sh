@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> GortGPT deploy script: local-ai-rollout-2026-10-17"
 echo "==> Source revision: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "==> Applying pending D1 migrations to production..."
