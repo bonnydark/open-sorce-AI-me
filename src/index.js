@@ -20,6 +20,7 @@ import { handleBilling, handleStripeWebhook } from "./modules/billing.js";
 import { handleBusinessTeam } from "./modules/business-team.js";
 import { handleAdminApi, isAdminUser } from "./modules/admin.js";
 import { handleApiTokens, handlePublicAiApi } from "./modules/api-tokens.js";
+import { handleGoogleIntegration, handleGoogleOAuthCallback } from "./modules/google-docs.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -68,6 +69,8 @@ export default {
         response = await getSharedFile(request, env, url);
       } else if (url.pathname === "/api/billing/webhook" && request.method === "POST") {
         response = await handleStripeWebhook(request, env);
+      } else if (url.pathname === "/api/integrations/google/callback" && request.method === "GET") {
+        response = await handleGoogleOAuthCallback(request, env);
       } else if (url.pathname.startsWith("/api/shared/") && request.method === "GET") {
         response = await getSharedChat(request, env, url);
       } else if (url.pathname.startsWith("/v1/")) {
@@ -89,6 +92,8 @@ export default {
             response = await handleBilling(request, env, user, url);
           } else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
             response = json({ error: "Your monthly plan allowance is used up. Upgrade your plan or use bonus credits if available. The allowance resets at the start of the next UTC month.", code: "MONTHLY_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
+          } else if (url.pathname.startsWith("/api/integrations/google/")) {
+            response = await handleGoogleIntegration(request, env, user, url);
           } else if (url.pathname.startsWith("/api/integrations/github/")) {
             response = await handleGitHubWorkspace(request, env, user, url);
           } else if (url.pathname === "/api/osint") {
