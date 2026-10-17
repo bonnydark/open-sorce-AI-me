@@ -1,5 +1,13 @@
 const json = (data, status = 200) => Response.json(data, { status });
 
+// Initial self-serve tiers. Paid access is not granted by changing a client-side value;
+// a verified billing webhook/admin action must update users.plan in a later step.
+export const PLAN_LIMITS = Object.freeze({
+  free: { monthlyRequests: 100, label: "Free" },
+  pro: { monthlyRequests: 2000, label: "Pro" },
+  business: { monthlyRequests: 10000, label: "Business" }
+});
+
 let usageSchemaReady = null;
 async function ensureUsageSchema(db) {
   if (!usageSchemaReady) {
@@ -19,6 +27,45 @@ async function ensureUsageSchema(db) {
   return usageSchemaReady;
 }
 
+async function readPlanUsage(db, userId) {
+  await ensureUsageSchema(db);
+  let user;
+  try {
+    user = await db.prepare("SELECT plan FROM users WHERE id=?").bind(userId).first();
+  } catch {
+    // Fail closed to the free tier if the plan migration has not reached production.
+    user = { plan: "free" };
+  }
+  const requestedPlan = String(user?.plan || "free").toLowerCase();
+  const plan = Object.hasOwn(PLAN_LIMITS, requestedPlan) ? requestedPlan : "free";
+  const usage = await db.prepare(`
+    SELECT COUNT(*) AS requests,
+           COALESCE(SUM(input_characters),0) AS inputCharacters,
+           COALESCE(SUM(image_count),0) AS images,
+           MIN(created_at) AS firstEventAt
+    FROM usage_events
+    WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
+  `).bind(userId).first();
+  const limit = PLAN_LIMITS[plan].monthlyRequests;
+  const requests = Number(usage?.requests || 0);
+  return {
+    plan,
+    planLabel: PLAN_LIMITS[plan].label,
+    period: "calendar_month",
+    requests,
+    monthlyLimit: limit,
+    remaining: Math.max(0, limit - requests),
+    allowed: requests < limit,
+    inputCharacters: Number(usage?.inputCharacters || 0),
+    images: Number(usage?.images || 0),
+    firstEventAt: usage?.firstEventAt || null
+  };
+}
+
+export async function checkPlanQuota(db, userId) {
+  return readPlanUsage(db, userId);
+}
+
 export async function recordUsage(db, userId, { moduleId = "ai-engine", inputCharacters = 0, imageCount = 0 } = {}) {
   await ensureUsageSchema(db);
   await db.prepare(
@@ -28,29 +75,17 @@ export async function recordUsage(db, userId, { moduleId = "ai-engine", inputCha
 
 export async function handleUsage(request, env, user) {
   if (!env.DB) return json({ error: "Database is not configured." }, 503);
-  await ensureUsageSchema(env.DB);
-  const totals = await env.DB.prepare(`
-    SELECT COUNT(*) AS requests,
-           COALESCE(SUM(input_characters),0) AS inputCharacters,
-           COALESCE(SUM(image_count),0) AS images,
-           MIN(created_at) AS firstEventAt
-    FROM usage_events
-    WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT%H:%M:%fZ','now','-30 days')
-  `).bind(user.id).first();
+  const status = await readPlanUsage(env.DB, user.id);
   const grouped = await env.DB.prepare(`
     SELECT module_id AS moduleId, COUNT(*) AS requests,
            COALESCE(SUM(image_count),0) AS images
     FROM usage_events
-    WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT%H:%M:%fZ','now','-30 days')
+    WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
     GROUP BY module_id ORDER BY requests DESC
   `).bind(user.id).all();
   return json({
-    period: "last_30_days",
-    requests: Number(totals?.requests || 0),
-    inputCharacters: Number(totals?.inputCharacters || 0),
-    images: Number(totals?.images || 0),
-    firstEventAt: totals?.firstEventAt || null,
+    ...status,
     byModule: grouped.results || [],
-    metering: "request metadata only; prompt and response contents are not stored in usage_events"
+    metering: "Request metadata only; prompt, response, and image contents are not stored in usage_events."
   });
 }
