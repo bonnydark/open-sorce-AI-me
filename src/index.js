@@ -273,6 +273,12 @@ export default {
           const adminUrl = new URL(assetPath, url.origin);
           return env.ASSETS.fetch(new Request(adminUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
         }
+        // Browser-local AI is served from the same GortGPT Worker and domain.
+        if (url.pathname === "/local-ai" || url.pathname === "/local-ai/") {
+          const localAiUrl = new URL("/local-ai/index.html", url.origin);
+          localAiUrl.search = url.search;
+          return env.ASSETS.fetch(new Request(localAiUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
+        }
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
         if (url.pathname === "/help" || url.pathname === "/help/") {
           const helpUrl = new URL("/help.html", url.origin);
