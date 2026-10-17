@@ -22,13 +22,13 @@ function shouldAutoResearch(conversation, settings) {
 }
 
 export async function generateGrotO1Reply(env, conversation, settings = {}, images = []) {
-  if (!env?.AI) throw new Error("Cloudflare Workers AI binding AI is missing.");
+
   const history = Array.isArray(conversation) ? conversation : [];
   const imageList = Array.isArray(images) ? images.filter(item => typeof item === "string").slice(0, 3) : [];
 
   // Vision is automatic: attaching an image is enough; no separate module switch.
   if (imageList.length) {
-    return generateReply(env.AI, history, {
+    return generateReply(env, history, {
       ...settings,
       activeModule: "ai-engine",
       specialistMode: settings.specialistMode === true,
@@ -44,15 +44,15 @@ export async function generateGrotO1Reply(env, conversation, settings = {}, imag
 
   // Optional task profiles tune Grot-O1 without creating more top-level modules.
   if (settings.specialistMode === true && settings.workspaceProfile === "developer") {
-    return { reply: await generateCodeCopilotReply(env.AI, history, settings), modelCalls: 1, route: "developer" };
+    return { reply: await generateCodeCopilotReply(env, history, settings), modelCalls: 1, route: "developer" };
   }
   if (settings.specialistMode === true && ["bug-bounty", "student"].includes(settings.workspaceProfile)) {
     const moduleId = settings.workspaceProfile === "bug-bounty" ? "security-analyst" : "study-tutor";
-    return { reply: await generateSpecialistReply(env.AI, moduleId, history, settings), modelCalls: 1, route: moduleId };
+    return { reply: await generateSpecialistReply(env, moduleId, history, settings), modelCalls: 1, route: moduleId };
   }
 
   return {
-    reply: await generateReply(env.AI, history, { ...settings, activeModule: "ai-engine", visionMode: false }, []),
+    reply: await generateReply(env, history, { ...settings, activeModule: "ai-engine", visionMode: false }, []),
     modelCalls: 1,
     route: "general"
   };
