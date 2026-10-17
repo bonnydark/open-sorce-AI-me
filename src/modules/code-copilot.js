@@ -1,3 +1,4 @@
+import { coreChat } from "./core-ai.js";
 const MODEL = "@cf/qwen/qwen2.5-coder-32b-instruct";
 
 const SYSTEM_PROMPT = `You are Code Copilot, a dedicated software engineering module inside GortGPT.
@@ -19,19 +20,17 @@ WORKFLOW
 
 You are a separate specialist module with this prompt and model configuration. Do not describe yourself as the general assistant unless asked.`;
 
-export async function generateCodeCopilotReply(aiBinding, conversation, settings = {}) {
-  if (!aiBinding) throw new Error("Cloudflare Workers AI binding AI is missing.");
+export async function generateCodeCopilotReply(env, conversation, settings = {}) {
   const messages = Array.isArray(conversation)
     ? conversation.filter(item => item && ["system", "user", "assistant"].includes(item.role) && typeof item.content === "string").slice(-40)
     : [];
   const customStyle = typeof settings.customStyle === "string" ? settings.customStyle.trim().slice(0, 500) : "";
   const answerStyle = ({ concise: "Be concise but include the complete fix.", balanced: "Give a balanced explanation with actionable steps.", detailed: "Explain the implementation thoroughly, including relevant edge cases and tests." })[settings.answerStyle] || "Give a balanced explanation with actionable steps.";
   const system = SYSTEM_PROMPT + "\n\nResponse preference: " + answerStyle + "\nCustom style preference: " + customStyle;
-  const result = await aiBinding.run(MODEL, {
-    messages: [{ role: "system", content: system }, ...messages],
-    max_tokens: 2048
-  });
-  const reply = result?.response ?? result?.choices?.[0]?.message?.content ?? result?.output_text;
+  const reply = await coreChat(env, [
+    { role: "system", content: system },
+    ...messages
+  ], { max_tokens: 2048 });
   if (typeof reply !== "string" || !reply.trim()) {
     throw new Error("Code Copilot returned an empty response.");
   }
