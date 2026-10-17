@@ -11,7 +11,7 @@ import { handleFiles } from "./modules/files.js";
 import { fetchPublicText } from "./modules/web-fetch.js";
 import { handleOsint } from "./modules/osint.js";
 import { handleSecurity } from "./modules/security.js";
-import { handleUsage, recordUsage } from "./modules/usage.js";
+import { handleUsage, recordUsage, checkPlanQuota } from "./modules/usage.js";
 import { handleResearchSearch, searchWeb } from "./modules/research.js";
 import { handleGitHubWorkspace } from "./modules/github-workspace.js";
 
@@ -53,7 +53,9 @@ export default {
         else {
           const user = await getSessionUser(request, env);
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
-          else if (url.pathname.startsWith("/api/integrations/github/")) {
+          else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
+            response = json({ error: "Monthly AI request limit reached. Your usage resets at the start of next month.", code: "PLAN_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
+          } else if (url.pathname.startsWith("/api/integrations/github/")) {
             response = await handleGitHubWorkspace(request, env, user, url);
           } else if (url.pathname === "/api/osint") {
             response = await handleOsint(request);
