@@ -41,7 +41,7 @@ function corsHeaders(request) {
   } else if (origin && url.origin === origin) {
     headers.set("Access-Control-Allow-Origin", origin);
     headers.set("Access-Control-Allow-Credentials", "true");
-    headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+    headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
     headers.set("Access-Control-Allow-Headers", "Content-Type");
   }
   return headers;
@@ -78,7 +78,7 @@ export default {
           if (!user) response = json({ error: "Sign in to access your chat history." }, 401);
           else if (url.pathname.startsWith("/api/admin/")) {
             response = await handleAdminApi(request, env, user, url);
-          } else if (url.pathname === "/api/keys" || /^\/api\/keys\/[a-f0-9-]+$/i.test(url.pathname)) {
+          } else if (url.pathname === "/api/keys" || /^\/api\/keys\/[a-f0-9-]+(?:\/(?:reveal|usage|settings))?$/i.test(url.pathname)) {
             response = await handleApiTokens(request, env, user, url);
           } else if (url.pathname.startsWith("/api/billing/")) {
             response = await handleBilling(request, env, user, url);
