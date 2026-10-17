@@ -696,10 +696,16 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
   const automatic=Boolean(options.automatic);
   if(localAiLoading)return;
   if(localAiEngine){localAiEnabled=true;if(localAiButton){localAiButton.textContent='⚡ Local AI: ON';localAiButton.classList.add('local-ai-active')}setLocalAiStatus('Local AI is ready on this device.');return}
-  if(!('gpu'in navigator)){setLocalAiStatus('This browser has no WebGPU. GortGPT will continue automatically with its standard AI module.');if(localAiButton)localAiButton.textContent='⚡ Local AI unavailable';return}
+  if(!('gpu'in navigator)){setLocalAiStatus('WebGPU is not available in this browser. Enable browser graphics acceleration or use a WebGPU-compatible browser/device. Standard GortGPT AI remains available.');if(localAiButton)localAiButton.textContent='⚡ Local AI unavailable';return}
   localAiLoading=true;if(localAiButton){localAiButton.disabled=true;localAiButton.textContent='⚡ Starting Local AI…'}
   let lastError=null;
   try{
+   localAiStage='WebGPU compatibility';
+   setLocalAiStatus('Checking whether this device exposes a compatible GPU adapter…');
+   let gpuAdapter=null;
+   try{gpuAdapter=await navigator.gpu.requestAdapter()}
+   catch(adapterError){throw new Error('The browser could not initialize WebGPU. Turn on graphics acceleration, restart the browser, and check the GPU driver. '+(adapterError?.message||''))}
+   if(!gpuAdapter)throw new Error('No compatible WebGPU adapter was found. This is a browser/device graphics limitation, not a Cloudflare token issue. Try Chrome/Edge with hardware acceleration enabled and an updated graphics driver. If the device has no supported GPU, this WebGPU model cannot run on it.');
    localAiStage='server manifest';
    setLocalAiStatus('Checking model version and local setup…');
    localAiManifest=await getLocalAiManifest();
