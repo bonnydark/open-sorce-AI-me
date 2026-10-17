@@ -30,7 +30,11 @@ export async function handleAdminApi(request, env, user, url) {
       `).bind(start, start, start).first(),
       env.DB.prepare("SELECT plan, COUNT(*) AS count FROM users GROUP BY plan ORDER BY plan").all(),
       env.DB.prepare(`
-        SELECT u.id, u.email, u.display_name AS name, u.plan, u.token_balance AS tokens, u.created_at AS createdAt,
+        SELECT u.id, u.email, u.display_name AS name, u.plan,
+          CASE WHEN lower(COALESCE(u.plan,'free'))='business' THEN 'business(main)'
+               WHEN EXISTS (SELECT 1 FROM business_team_memberships tm WHERE tm.member_user_id=u.id AND tm.status='active') THEN 'business(add)'
+               ELSE lower(COALESCE(u.plan,'free')) END AS adminRole,
+          u.token_balance AS tokens, u.created_at AS createdAt,
           (SELECT COUNT(*) FROM conversations c WHERE c.user_id=u.id) AS conversations,
           (SELECT COUNT(*) FROM usage_events e WHERE e.user_id=u.id AND e.created_at >= ?) AS requestsThisMonth,
           (SELECT COALESCE(SUM(e.estimated_cost_usd),0) FROM usage_events e WHERE e.user_id=u.id AND e.created_at >= ?) AS estimatedCostUsd,
@@ -89,7 +93,11 @@ export async function handleAdminApi(request, env, user, url) {
     try {
       const [account, usage, modules, ledger, activity] = await Promise.all([
         env.DB.prepare(`
-          SELECT u.id,u.email,u.display_name AS name,u.plan,u.token_balance AS tokens,u.created_at AS createdAt,
+          SELECT u.id,u.email,u.display_name AS name,u.plan,
+            CASE WHEN lower(COALESCE(u.plan,'free'))='business' THEN 'business(main)'
+                 WHEN EXISTS (SELECT 1 FROM business_team_memberships tm WHERE tm.member_user_id=u.id AND tm.status='active') THEN 'business(add)'
+                 ELSE lower(COALESCE(u.plan,'free')) END AS adminRole,
+            u.token_balance AS tokens,u.created_at AS createdAt,
             (SELECT COUNT(*) FROM conversations c WHERE c.user_id=u.id) AS conversations,
             (SELECT COUNT(*) FROM usage_events e WHERE e.user_id=u.id AND e.created_at >= ?) AS requestsThisMonth,
             (SELECT MAX(e.created_at) FROM usage_events e WHERE e.user_id=u.id) AS lastAIActivity
