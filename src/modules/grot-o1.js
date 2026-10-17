@@ -37,7 +37,7 @@ export async function generateGrotO1Reply(env, conversation, settings = {}, imag
 
   // Agentic research is a capability inside Grot-O1, controlled by one setting.
   if (shouldAutoResearch(history, settings)) {
-    const result = await runAgent(env, history, { maxSteps: 4 });
+    const result = await runAgent(env, history, { maxSteps: 4, forceResearch: true });
     return { reply: result.reply, modelCalls: result.modelCalls, route: "agent" };
   }
 
