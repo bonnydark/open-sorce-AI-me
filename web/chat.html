@@ -304,6 +304,7 @@ body.custom-colors-enabled .pill{border-color:var(--line)!important;color:var(--
  <div class="railbrand" title="GortGPT">AI</div>
  <button class="railbtn" id="railNewChat" type="button" title="New chat" aria-label="New chat">＋<span>New</span></button>
  <button class="railbtn" id="railSettings" type="button" title="Settings and modules" aria-label="Settings and modules">⚙<span>Settings</span></button>
+ <button class="railbtn" id="railBilling" type="button" title="Plans and billing" aria-label="Plans and billing">＄<span>Plans</span></button>
  <button class="railbtn" id="railOsint" type="button" title="OSINT workspace" aria-label="OSINT workspace">⌕<span>OSINT</span></button>
  <button class="railbtn" id="railNews" type="button" title="Search recent news" aria-label="Search recent news">📰<span>News</span></button>
  <button class="railbtn" id="railSupport" type="button" title="Support and bug report" aria-label="Support and bug report">♡<span>Support</span></button>
@@ -552,6 +553,7 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
  window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMobileNav()});
  $('railNewChat').addEventListener('click',()=> $('newChat').click());
  $('railSettings').addEventListener('click',()=> $('openSettings').click());
+ $('railBilling').addEventListener('click',()=>{location.href='/billing'});
  $('railOsint').addEventListener('click',()=> $('openOsint').click());
  $('railSupport').addEventListener('click',()=> $('openSupport').click());
  $('newChat').addEventListener('click',async event=>{event.preventDefault();event.stopPropagation();closeMobileNav();if(!currentUser){$('authGate').classList.remove('hidden');$('authMessage').textContent='Your session is not active. Please sign in again.';return}const button=$('newChat');button.disabled=true;try{const data=await api('/api/chats',{method:'POST',body:JSON.stringify({title:'New chat'})});const chat=data.chat;if(!chat?.id)throw new Error('Could not create a conversation.');activeChatId=chat.id;activeChatTitle=chat.title||'New chat';if(activeModule?.setConversation)activeModule.setConversation(chat.id);showEmpty('Send a message to begin this chat.');$('chatSubtitle').textContent=activeChatTitle;navigateToChat(chat.id,activeChatTitle);await loadChatButtonsOnly();input.focus()}catch(error){addMessage('SYSTEM','Could not start a new chat: '+error.message);if(/sign in|session/i.test(error.message)){$('authGate').classList.remove('hidden')}}finally{button.disabled=false}});
