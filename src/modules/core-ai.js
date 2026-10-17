@@ -12,9 +12,7 @@
  */
 function getEndpoint(env) {
   const raw = typeof env?.CORE_AI_URL === "string" ? env.CORE_AI_URL.trim() : "";
-  if (!raw) {
-    throw new Error("GortGPT Core is not configured. Run your own model server and set CORE_AI_URL to its HTTPS /v1 endpoint. No external AI provider fallback is enabled.");
-  }
+  if (!raw) return null;
   let url;
   try { url = new URL(raw); } catch { throw new Error("CORE_AI_URL must be a valid URL."); }
   if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -28,6 +26,26 @@ function getEndpoint(env) {
 
 export async function coreChat(env, messages, options = {}) {
   const endpoint = getEndpoint(env);
+  // Prefer an explicitly configured self-hosted Core endpoint. If it is absent,
+  // use Cloudflare Workers AI through the native binding; no API token is needed.
+  if (!endpoint) {
+    if (!env?.AI || typeof env.AI.run !== "function") {
+      throw new Error("GortGPT AI is not configured. Enable the Workers AI binding (AI) for this Worker, or set CORE_AI_URL to your own HTTPS /v1 endpoint.");
+    }
+    const model = typeof env.CORE_AI_MODEL === "string" && env.CORE_AI_MODEL.trim() && env.CORE_AI_MODEL.trim() !== "local-model"
+      ? env.CORE_AI_MODEL.trim()
+      : "@cf/meta/llama-3.1-8b-instruct";
+    const result = await env.AI.run(model, {
+      messages: Array.isArray(messages) ? messages : [],
+      temperature: Number.isFinite(options.temperature) ? options.temperature : 0.4,
+      max_tokens: Number.isFinite(options.max_tokens) ? Math.min(options.max_tokens, 4096) : 1024
+    });
+    const answer = result?.response ?? result?.choices?.[0]?.message?.content ?? result?.output_text;
+    if (typeof answer !== "string" || !answer.trim()) {
+      throw new Error("Cloudflare Workers AI returned an empty response. Check the configured model and Workers AI availability.");
+    }
+    return answer.trim();
+  }
   const headers = { "content-type": "application/json", "accept": "application/json" };
   const token = typeof env.CORE_AI_TOKEN === "string" ? env.CORE_AI_TOKEN.trim() : "";
   if (token) headers.authorization = "Bearer " + token;
