@@ -87,7 +87,7 @@ export async function handleApiTokens(request, env, user, url) {
     }
     if (action === "usage" && request.method === "GET") {
       const start = dailyStartIso();
-      const stats = await env.DB.prepare("SELECT COUNT(*) AS total_requests,COALESCE(SUM(input_characters),0) AS input_characters,COALESCE(SUM(output_characters),0) AS output_characters,COALESCE(SUM(estimated_cost_usd),0) AS estimated_cost_usd FROM api_token_usage WHERE token_id=? AND user_id=?").bind(id,user.id).first();
+      const stats = await env.DB.prepare("SELECT COUNT(*) AS total_requests,COALESCE(SUM(input_characters),0) AS input_characters,COALESCE(SUM(output_characters),0) AS output_characters,SUM(estimated_cost_usd) AS estimated_cost_usd FROM api_token_usage WHERE token_id=? AND user_id=?").bind(id,user.id).first();
       const today = await env.DB.prepare("SELECT COUNT(*) AS requests,COALESCE(SUM(input_characters),0) AS input_characters,COALESCE(SUM(output_characters),0) AS output_characters,COALESCE(SUM(estimated_cost_usd),0) AS estimated_cost_usd FROM api_token_usage WHERE token_id=? AND user_id=? AND created_at>=?").bind(id,user.id,start).first();
       return json({ token: { id: row.id, label: row.label, purpose: row.purpose, dailyLimit: Number(row.daily_limit || 100), revoked: Boolean(row.revoked_at), prefix: row.token_prefix }, today: today || {}, total: stats || {}, resetAt: new Date(Date.now() + (24*60*60*1000)).toISOString() });
     }
