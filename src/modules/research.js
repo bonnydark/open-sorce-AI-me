@@ -160,7 +160,7 @@ export async function handleResearchSearch(request, env) {
   if (query.length < 2) return json({ error: "Enter a search query." }, 400);
   if (query.length > 300) return json({ error: "Search query is too long." }, 413);
   try {
-    const result = type === "news" ? await searchNews(env, query) : { results: await searchWeb(env, query), provider: "Brave Search" };
+    const result = type === "news" ? await searchNews(env, query) : { results: await searchWeb(env, query), provider: "Brave Search or public RSS fallback" };
     return json({ query, type, results: result.results, provider: result.provider, retrievedAt: new Date().toISOString() });
   } catch (error) { return json({ error: String(error?.message || error) }, 502); }
 }
