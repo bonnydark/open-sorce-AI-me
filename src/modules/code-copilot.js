@@ -1,6 +1,4 @@
 import { coreChat } from "./core-ai.js";
-const MODEL = "@cf/qwen/qwen2.5-coder-32b-instruct";
-
 const SYSTEM_PROMPT = `You are Code Copilot, a dedicated software engineering module inside GortGPT.
 Your primary job is to help build, debug, review, test, refactor, and explain software.
 
