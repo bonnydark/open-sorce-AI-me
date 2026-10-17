@@ -32,9 +32,14 @@ export async function coreChat(env, messages, options = {}) {
     if (!env?.AI || typeof env.AI.run !== "function") {
       throw new Error("GortGPT AI is not configured. Enable the Workers AI binding (AI) for this Worker, or set CORE_AI_URL to your own HTTPS /v1 endpoint.");
     }
-    const model = typeof env.CORE_AI_MODEL === "string" && env.CORE_AI_MODEL.trim() && env.CORE_AI_MODEL.trim() !== "local-model"
-      ? env.CORE_AI_MODEL.trim()
-      : "@cf/meta/llama-3.1-8b-instruct";
+    const configuredModel = typeof env.CORE_AI_MODEL === "string" ? env.CORE_AI_MODEL.trim() : "";
+    // Cloudflare retired the older Llama 3.1 model IDs. Override stale values
+    // (including the historical "infire" typo) with a currently recommended model.
+    const retiredModel = /(?:infire-)?llama-3\.1-8b-instruct(?:-awq)?$/i.test(configuredModel)
+      || /@cf\/meta\/llama-3-8b-instruct(?:-awq)?$/i.test(configuredModel);
+    const model = configuredModel && configuredModel !== "local-model" && !retiredModel
+      ? configuredModel
+      : "@cf/zai-org/glm-4.7-flash";
     const result = await env.AI.run(model, {
       messages: Array.isArray(messages) ? messages : [],
       temperature: Number.isFinite(options.temperature) ? options.temperature : 0.4,
