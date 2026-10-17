@@ -43,7 +43,15 @@ export async function runAgent(env, conversation, options = {}) {
   const plan = [];
   const transcript = [];
   const sources = [];
+  const fetchedUrls = [];
+  const attemptedUrls = [];
+  const lastUserMessage = [...history].reverse().find(item => item.role === "user")?.content || "";
+  const researchIntent = options.forceResearch === true || /\b(research|sources?|citations?|references?|fact.?check|verify|latest|current|today|recent|news|202[0-9])\b|tìm nguồn|trích dẫn|dẫn nguồn|đối chiếu|kiểm chứng|tra cứu|tìm trên mạng|tìm trên web|mới nhất|hôm nay|hiện tại|tin mới|nghiên cứu/i.test(lastUserMessage);
   const first = await ask(env, PLANNER_SYSTEM, history);
+  if (researchIntent && first.action === "finish") {
+    first.action = "search_web";
+    first.query = String(lastUserMessage).slice(0, 220);
+  }
   let modelCalls = 1;
   mergePlan(plan, first.plan);
   let decision = first;
@@ -73,7 +81,9 @@ export async function runAgent(env, conversation, options = {}) {
     } else if (decision.action === "fetch_url") {
       const target = String(decision.url || "").trim().slice(0,1000);
       try {
+        attemptedUrls.push(target);
         const page = await fetchPublicText(target);
+        fetchedUrls.push(page.url);
         if (!sources.some(source => source.url === page.url)) {
           let domain = ""; try { domain = new URL(page.url).hostname.replace(/^www\\./, ""); } catch {}
           sources.push({ title: String(page.title || domain || page.url).slice(0,180), url: page.url, domain });
@@ -92,6 +102,22 @@ export async function runAgent(env, conversation, options = {}) {
     decision = await ask(env, EXECUTOR_SYSTEM, history, extra);
     modelCalls++;
     mergePlan(plan, decision.plan);
+    if (researchIntent && completedTools < limit) {
+      const fetched = sources.filter(source => fetchedUrls.includes(source.url));
+      const fetchedDomains = new Set(fetched.map(source => source.domain).filter(Boolean));
+      if (fetchedDomains.size < 2) {
+        const nextPage = sources.find(source => source.url && source.domain && !attemptedUrls.includes(source.url) && !fetchedDomains.has(source.domain));
+        if (nextPage) {
+          attemptedUrls.push(nextPage.url);
+          decision = { ...decision, action: "fetch_url", url: nextPage.url };
+        } else {
+          const knownDomains = new Set(sources.map(source => source.domain).filter(Boolean));
+          if (knownDomains.size < 2) {
+            decision = { ...decision, action: "search_web", query: String(lastUserMessage).slice(0, 160) + " independent sources official documentation" };
+          }
+        }
+      }
+    }
   }
   const evidence = "USER REQUEST / CONTEXT:\n"+history.map(item=>item.role.toUpperCase()+": "+item.content).join("\n")+
     "\n\nPLAN:\n"+(plan.map((x,i)=>(i+1)+". "+x).join("\n")||"(No explicit plan)")+
