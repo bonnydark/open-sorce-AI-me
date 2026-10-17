@@ -13,7 +13,7 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - Per-account preferences: theme, response style, typewriter effect/speed, and code panels.
 - SaaS usage metering records request counts, input character counts, image counts, and module usage without storing prompt/response content in the usage table.
 - Dedicated backend model adapter at `src/modules/ai-engine.js`; browser adapter at `modul/ai-engine.js`.
-- Workers AI uses `@cf/meta/llama-3.3-70b-instruct-fp8-fast` by default, with an optional Qwen 2.5 Coder 32B model for the Code Copilot module when available in the account. Model weights are hosted by the inference provider; this repository stores the Worker code and model configuration, not multi-gigabyte model weights.
+- Core chat, Code Copilot, Security Analyst, Study Tutor, Gort, and agent planning use the project-owned `src/modules/core-ai.js` adapter. Inference is sent only to a model server you control via `CORE_AI_URL`; there is no hosted AI-provider fallback. Model weights are installed on your own machine/server, not committed to Git.
 
 ## Project structure
 - `web/index.html` — frontend, account UI, chat navigation, settings panel.
@@ -26,12 +26,12 @@ A modular AI chat workspace built with a static frontend and a Cloudflare Worker
 - `migrations/0001_auth_chat.sql` — accounts, sessions, and chat history schema.
 - `migrations/0002_user_settings.sql` — per-user preferences.
 - `migrations/0005_usage_events.sql` — privacy-conscious usage metering.
-- `wrangler.toml` — Worker, Assets, Workers AI, and D1 bindings.
+- `wrangler.toml` — Worker, static Assets, and D1 binding. Model inference is self-hosted and configured separately.
 
 ## Required D1 setup
-Create a Cloudflare D1 database named `open-sorce-ai-me-db`, copy its database ID into `wrangler.toml` in place of `REPLACE_WITH_YOUR_D1_DATABASE_ID`, then apply both migrations in order. The Worker needs a D1 binding named `DB` and a Workers AI binding named `AI`.
+Create/configure the D1 database and bind it as `DB`. For self-hosted model setup, follow [`ai-runtime/README.md`](ai-runtime/README.md). Configure `CORE_AI_URL`, `CORE_AI_MODEL`, and optional `CORE_AI_TOKEN` in Worker variables/secrets. Image generation is a separate optional service configured with `CORE_IMAGE_URL`, `CORE_IMAGE_MODEL`, and optional `CORE_IMAGE_TOKEN`.
 
-After applying the migrations, `GET /api/health` reports whether the Worker sees the AI and database bindings.
+After applying the migrations, `GET /api/health` reports whether the Core AI endpoint is configured and the database is bound. This does not verify that the model server is reachable; send a test prompt.
 
 ## API
 - `POST /api/auth/register` — `{ "name": "Name", "email": "you@example.com", "password": "at-least-8-chars" }`
@@ -52,7 +52,7 @@ All chat-history, settings, and AI endpoints require a signed-in session. Conver
 - Email verification and password reset are not implemented yet.
 - Configure rate limiting at the edge before opening registration to the public.
 - Chat titles stay in the account history rather than the URL. Conversation IDs are opaque identifiers, not encryption or authorization tokens; access is enforced by the authenticated backend.
-- The application code is open source, but inference currently depends on Cloudflare Workers AI; the repository does not itself contain model weights or a separately trained model.
+- The application code and orchestration are project-owned, but the model weights are a separate dependency that you must download and run on infrastructure you control. This project does not yet train foundation-model weights from scratch.
 
 ## Specialist workspace modes
 
@@ -67,5 +67,4 @@ The Support & report a bug form prepares a report locally and can copy it or ope
 - Gort specializes in code generation, review, debugging, refactoring, and revision across programming languages. It preserves conversation context, uses configured live web research context, and uses the chat UI's existing browser-based voice input/output.
 - Gort has a separate `gort_memories` table per account (`migrations/0006_gort_memories.sql`). With Automatic memories enabled, it stores explicit remember/preference statements; this is persistent memory, not model training or self-modifying weights.
 - The numeric Caution / guardrail level is stored as `ethicsLevel` (0–100). It adjusts how cautious and explanatory the assistant is; it cannot disable core safety or privacy protections.
-- Gort has no third-party AI inference fallback and never calls `env.AI`. Configure `GORT_INFERENCE_URL` to your own HTTPS OpenAI-compatible model server; optionally set `GORT_INFERENCE_TOKEN` and `GORT_MODEL_NAME` as Worker secrets/vars. The endpoint should expose `/v1/chat/completions` unless you supply that full path.
-- Cloudflare remains the web/API host and D1 store, but model inference must run on infrastructure you control. A Cloudflare Worker cannot itself host multi-billion-parameter model weights as a normal Worker bundle. Until the self-hosted inference endpoint is configured, Gort returns a setup error rather than using another company's AI.
+- All text, specialist, vision-message, and agent orchestration now route through `CORE_AI_URL`. Configure that endpoint to your own OpenAI-compatible runtime. Image generation separately requires your own compatible image-generation endpoint at `CORE_IMAGE_URL`. Cloudflare remains the web/API and D1 host only; it does not run the model. See [`ai-runtime/README.md`](ai-runtime/README.md).
