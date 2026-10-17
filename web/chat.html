@@ -681,38 +681,50 @@ body.share-view .message-image-previews img{display:block!important;visibility:v
    let i=0;const tick=()=>{const next=Math.min(i+1,part.value.length);target.textContent+=part.value.slice(i,next);i=next;messages.scrollTop=messages.scrollHeight;if(i<part.value.length)setTimeout(tick,preferences.typewriterSpeed||0);else typeNext()};tick();
   };typeNext();
  }
- let localAiEngine=null,localAiLoading=false,localAiEnabled=false;
+ let localAiEngine=null,localAiLoading=false,localAiEnabled=false,localAiManifest=null;
  let localAiStage='idle';
  const localAiButton=$('localAiToggle'),localAiStatus=$('localAiStatus');
  function setLocalAiStatus(message){if(localAiStatus)localAiStatus.textContent=message}
+ async function getLocalAiManifest(){
+  const response=await fetch('/api/local-ai/manifest',{cache:'no-store',credentials:'same-origin'});
+  if(!response.ok)throw new Error('Model manifest request failed (HTTP '+response.status+').');
+  const manifest=await response.json();
+  if(!manifest?.ok||!manifest.modelId||!manifest.engineVersion)throw new Error('The server returned an invalid Local AI manifest.');
+  return manifest;
+ }
  if(localAiButton)localAiButton.addEventListener('click',async()=>{
   if(localAiLoading)return;
   if(localAiEngine){localAiEnabled=!localAiEnabled;localAiButton.textContent=localAiEnabled?'⚡ Local AI: ON':'⚡ Local AI: OFF';localAiButton.classList.toggle('local-ai-active',localAiEnabled);setLocalAiStatus(localAiEnabled?'Local AI is active. Text prompts and replies use the model on this device.':'Local AI paused. GortGPT module routing is active.');return}
   if(!('gpu'in navigator)){setLocalAiStatus('WebGPU is unavailable. Use an updated Chrome/Edge browser and check chrome://gpu.');return}
-  localAiLoading=true;localAiButton.disabled=true;localAiButton.textContent='Loading Local AI…';
+  localAiLoading=true;localAiButton.disabled=true;localAiButton.textContent='Checking Local AI…';
   try{
+   localAiStage='server manifest';
+   setLocalAiStatus('Step 1/4: Checking the recommended model and version with GortGPT…');
+   localAiManifest=await getLocalAiManifest();
    localAiStage='engine CDN';
-   setLocalAiStatus('Step 1/3: Loading the browser inference engine…');
-   let CreateMLCEngine;
-   try{({CreateMLCEngine}=await import('https://esm.sh/@mlc-ai/web-llm@0.2.80'))}
+   setLocalAiStatus('Step 2/4: Loading WebLLM engine '+localAiManifest.engineVersion+'…');
+   let webllm;
+   try{webllm=await import('https://esm.sh/@mlc-ai/web-llm@0.2.80')}
    catch(firstImportError){
     setLocalAiStatus('Primary engine CDN failed; trying backup CDN…');
-    try{({CreateMLCEngine}=await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.80/+esm'))}
+    try{webllm=await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.80/+esm')}
     catch(secondImportError){throw new Error('Could not download WebLLM from either CDN. Check extensions, firewall, or access to esm.sh / jsdelivr. Details: '+(secondImportError?.message||firstImportError?.message||'CDN fetch failed'))}
    }
-   localAiStage='model download';
-   const model='Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
-   setLocalAiStatus('Step 2/3: Downloading a small model and preparing it. This may take a few minutes; keep this tab open.');
-   localAiEngine=await CreateMLCEngine(model,{initProgressCallback:report=>setLocalAiStatus('Model setup: '+(report?.text||'downloading model files…'))});
+   localAiStage='model cache/download';
+   setLocalAiButtonLabel('Loading Local AI…');
+   setLocalAiStatus('Step 3/4: Checking this browser’s saved model cache. If it is missing or incomplete, WebLLM will download the required files again.');
+   const appConfig={...webllm.prebuiltAppConfig,cacheBackend:localAiManifest.cacheBackend==='indexeddb'?'indexeddb':'cache'};
+   localAiEngine=await webllm.CreateMLCEngine(localAiManifest.modelId,{appConfig,initProgressCallback:report=>setLocalAiStatus((report?.text||'Preparing model…')+' · '+localAiManifest.modelVersion)});
    localAiStage='ready';
    localAiEnabled=true;localAiButton.textContent='⚡ Local AI: ON';localAiButton.classList.add('local-ai-active');
-   setLocalAiStatus('Ready. Step 3/3 complete: chat text is now inferred on this device without a provider AI API token.');
+   setLocalAiStatus('Ready. Model version '+localAiManifest.modelVersion+' is loaded. Future visits reuse the browser cache when it remains available; if deleted, missing model files are downloaded again.');
   }catch(error){
    localAiEngine=null;localAiEnabled=false;localAiButton.textContent='⚡ Local AI: OFF';
    const detail=error?.message||String(error);
-   setLocalAiStatus('Local AI failed during '+localAiStage+': '+detail+'. If during model download, allow access to Hugging Face/model files and ensure enough free RAM/VRAM. If during engine CDN, allow esm.sh and jsdelivr. Open DevTools → Console for the full error.');
+   setLocalAiStatus('Local AI failed during '+localAiStage+': '+detail+'. If during model download, allow access to model files and ensure enough free RAM/VRAM. If during engine CDN, allow esm.sh and jsdelivr. Open DevTools → Console for details.');
   }finally{localAiLoading=false;localAiButton.disabled=false}
  });
+ function setLocalAiButtonLabel(label){if(localAiButton)localAiButton.textContent=label}
  async function loadModule(moduleId=preferences.activeModule||'ai-engine'){
   try{const response=await fetch('https://cdn.jsdelivr.net/gh/'+OWNER+'/'+REPO+'@'+BRANCH+'/source/loader.js',{cache:'no-store'});if(!response.ok)throw new Error('Loader HTTP '+response.status);const source=await response.text();const blob=URL.createObjectURL(new Blob([source+'\n//# sourceURL=ai-module-loader.js'],{type:'text/javascript'}));try{const loader=await import(blob);activeModule=await loader.loadModule({rawBase,moduleId})}finally{URL.revokeObjectURL(blob)}
    $('moduleStatus').textContent='MODULE READY';$('modelState').textContent=activeModule.name||'AI module';
