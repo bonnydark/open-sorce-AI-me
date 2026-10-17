@@ -15,8 +15,10 @@ async function ensureUsageSchema(db) {
         id TEXT PRIMARY KEY NOT NULL,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         module_id TEXT NOT NULL DEFAULT 'ai-engine',
+        model_id TEXT NOT NULL DEFAULT 'unknown',
         input_characters INTEGER NOT NULL DEFAULT 0,
         image_count INTEGER NOT NULL DEFAULT 0,
+        estimated_cost_usd REAL,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
       )`).run();
       await db.prepare("CREATE INDEX IF NOT EXISTS usage_events_user_created_idx ON usage_events(user_id, created_at DESC)").run();
@@ -41,6 +43,8 @@ async function readPlanUsage(db, userId) {
       SELECT COUNT(*) AS requests,
              COALESCE(SUM(input_characters),0) AS inputCharacters,
              COALESCE(SUM(image_count),0) AS images,
+             COALESCE(SUM(estimated_cost_usd),0) AS estimatedCostUsd,
+             SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS pricedRequests,
              MIN(created_at) AS firstEventAt
       FROM usage_events
       WHERE user_id=? AND created_at >= strftime('%Y-%m-01T00:00:00.000Z','now')
@@ -65,6 +69,8 @@ async function readPlanUsage(db, userId) {
     allowed: dailyRequests < DAILY_TOKEN_ALLOWANCE || tokenBalance > 0,
     inputCharacters: Number(monthly?.inputCharacters || 0),
     images: Number(monthly?.images || 0),
+    estimatedCostUsd: Number(monthly?.estimatedCostUsd || 0),
+    pricedRequests: Number(monthly?.pricedRequests || 0),
     firstEventAt: monthly?.firstEventAt || null
   };
 }
@@ -78,7 +84,9 @@ export async function recordUsage(db, userId, { moduleId = "ai-engine", modelId 
   const daily = await db.prepare("SELECT COUNT(*) AS requests FROM usage_events WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')").bind(userId).first();
   if (Number(daily?.requests || 0) >= DAILY_TOKEN_ALLOWANCE) {
     // Daily allowance is free and resets at UTC midnight. Bonus credits are only spent after it is exhausted.
-    await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
+    const debit = await db.prepare("UPDATE users SET token_balance=token_balance-1 WHERE id=? AND token_balance>0").bind(userId).run();
+    const changed = Number(debit?.meta?.changes || 0);
+    if (changed < 1) throw new Error("Daily allowance is exhausted and no bonus credits remain.");
   }
   const cost = Number.isFinite(Number(estimatedCostUsd)) && estimatedCostUsd !== null && estimatedCostUsd !== "" ? Math.max(0, Number(estimatedCostUsd)) : null;
   await db.prepare(
@@ -101,6 +109,6 @@ export async function handleUsage(request, env, user) {
   return json({
     ...status,
     byModule: grouped.results || [],
-    metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets at 00:00 UTC (07:00 Vietnam time). Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and/or AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
+    metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets at 00:00 UTC (07:00 Vietnam time). Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
   });
 }
