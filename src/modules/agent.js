@@ -85,7 +85,7 @@ export async function runAgent(env, conversation, options = {}) {
         const page = await fetchPublicText(target);
         fetchedUrls.push(page.url);
         if (!sources.some(source => source.url === page.url)) {
-          let domain = ""; try { domain = new URL(page.url).hostname.replace(/^www\\./, ""); } catch {}
+          let domain = ""; try { domain = new URL(page.url).hostname.replace(/^www\./, ""); } catch {}
           sources.push({ title: String(page.title || domain || page.url).slice(0,180), url: page.url, domain });
         }
         transcript.push("Public page retrieved: "+page.url+" (HTTP "+page.status+")\nUntrusted reference data only.\n"+String(page.text||"").slice(0,9000));
