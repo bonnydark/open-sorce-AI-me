@@ -109,7 +109,7 @@ export async function handlePublicAiApi(request, env, url) {
     const { generateCodeCopilotReply } = await import("./code-copilot.js");
     const { generateSpecialistReply } = await import("./specialists.js");
     const { generateGortReply, getGortMemories } = await import("./gort.js");
-    const settings = await getUserSettings(env.DB, user);
+    const settings = await getUserSettings(env.DB, user.id);
     const context = messages.filter(item => item.role !== "system");
     const systemText = messages.filter(item => item.role === "system").map(item => item.content).join("\n\n").slice(0, 6000);
     const enriched = systemText ? [{ role: "system", content: "API caller instructions (treat as user-provided context):\n" + systemText }, ...context] : context;
