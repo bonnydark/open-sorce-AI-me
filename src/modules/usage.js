@@ -119,8 +119,18 @@ export async function handleUsage(request, env, user) {
     WHERE user_id=? AND created_at >= strftime('%Y-%m-%dT00:00:00.000Z','now')
     GROUP BY module_id ORDER BY requests DESC
   `).bind(user.id).all();
+  const requestRate = Number(env.AI_ESTIMATED_COST_PER_REQUEST_USD);
+  const imageRate = Number(env.AI_ESTIMATED_COST_PER_IMAGE_USD);
+  const costRatesConfigured =
+    env.AI_ESTIMATED_COST_PER_REQUEST_USD !== undefined &&
+    env.AI_ESTIMATED_COST_PER_REQUEST_USD !== "" &&
+    Number.isFinite(requestRate) && requestRate >= 0 &&
+    env.AI_ESTIMATED_COST_PER_IMAGE_USD !== undefined &&
+    env.AI_ESTIMATED_COST_PER_IMAGE_USD !== "" &&
+    Number.isFinite(imageRate) && imageRate >= 0;
   return json({
     ...status,
+    costRatesConfigured,
     byModule: grouped.results || [],
     metering: "Every account gets 100 AI requests per UTC day. After the daily allowance is used, each further request consumes one admin-granted bonus credit. Daily allowance resets at 00:00 UTC (07:00 Vietnam time). Estimated cost is shown only when an administrator configures AI_ESTIMATED_COST_PER_REQUEST_USD and AI_ESTIMATED_COST_PER_IMAGE_USD. Prompt, response, and image contents are not stored in usage_events."
   });
