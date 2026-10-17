@@ -21,6 +21,7 @@ import { handleBusinessTeam } from "./modules/business-team.js";
 import { handleAdminApi, isAdminUser } from "./modules/admin.js";
 import { handleApiTokens, handlePublicAiApi } from "./modules/api-tokens.js";
 import { handleGoogleIntegration, handleGoogleOAuthCallback } from "./modules/google-docs.js";
+import { handleImageGeneration } from "./modules/image-tools.js";
 
 const json = (data, status = 200) => Response.json(data, { status });
 const isApi = pathname => pathname.startsWith("/api/");
@@ -102,6 +103,8 @@ export default {
             response = await handleSecurity(request, url);
           } else if (url.pathname === "/api/research/search" && request.method === "POST") {
             response = await handleResearchSearch(request, env);
+          } else if (url.pathname === "/api/images/generate" && request.method === "POST") {
+            response = await handleImageGeneration(request, env, user);
           } else if (url.pathname === "/api/usage" && request.method === "GET") {
             response = await handleUsage(request, env, user);
           } else if (url.pathname === "/api/settings") {
