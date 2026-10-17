@@ -83,7 +83,7 @@ export default {
           } else if (url.pathname.startsWith("/api/billing/")) {
             response = await handleBilling(request, env, user, url);
           } else if (url.pathname === "/api/chat" && request.method === "POST" && !(await checkPlanQuota(env.DB, user.id)).allowed) {
-            response = json({ error: "Daily AI allowance used up. Wait until 07:00 Vietnam time for the reset, or use bonus credits if available.", code: "DAILY_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
+            response = json({ error: "Your monthly plan allowance is used up. Upgrade your plan or use bonus credits if available. The allowance resets at the start of the next UTC month.", code: "MONTHLY_LIMIT_REACHED", usageUrl: "/api/usage" }, 429);
           } else if (url.pathname.startsWith("/api/integrations/github/")) {
             response = await handleGitHubWorkspace(request, env, user, url);
           } else if (url.pathname === "/api/osint") {
