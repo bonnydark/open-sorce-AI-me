@@ -1,48 +1,56 @@
 const json = (data, status = 200) => Response.json(data, { status });
 
+function getImageEndpoint(env) {
+  const raw = typeof env.CORE_IMAGE_URL === "string" ? env.CORE_IMAGE_URL.trim() : "";
+  if (!raw) throw new Error("Self-hosted image generation is not configured. Set CORE_IMAGE_URL to your own OpenAI-compatible /v1/images/generations endpoint.");
+  let url;
+  try { url = new URL(raw); } catch { throw new Error("CORE_IMAGE_URL must be a valid URL."); }
+  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") throw new Error("CORE_IMAGE_URL must use HTTPS outside localhost.");
+  const path = url.pathname.replace(/\\/$/, "");
+  if (/\\/v1\\/images\\/generations$/.test(path)) return url;
+  url.pathname = (path.endsWith("/v1") ? path : path + "/v1") + "/images/generations";
+  return url;
+}
+
 export async function handleImageGeneration(request, env, user) {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
-  if (!env.AI) return json({ error: "Cloudflare Workers AI binding is not configured." }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: "Expected JSON." }, 400); }
   const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
   if (!prompt) return json({ error: "Describe the image you want to create." }, 400);
   if (prompt.length > 1500) return json({ error: "Image prompt must be 1,500 characters or fewer." }, 413);
   try {
-    // Convert the user's request into a clear visual prompt for Flux. Keep any
-    // requested words exactly in the language the user asked for; do not invent
-    // Chinese/Japanese/Korean text or add captions that were not requested.
-    let imagePrompt = prompt;
-    try {
-      const enhanced = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
-        messages: [
-          {
-            role: "system",
-            content: "You rewrite user requests into concise, detailed prompts for an image-generation model. Understand the user's language and preserve their intent. Return only the final image prompt, preferably in clear English for visual composition. CRITICAL: If the user asks for any visible text, preserve the exact requested wording and its original language in quotation marks, and explicitly instruct the image model to render only that exact text. Never add Chinese, Japanese, Korean, or any other writing unless explicitly requested. If no visible text was requested, explicitly say there must be no letters, words, captions, logos, or watermarks. Preserve requested names, numbers, and phrases exactly. Do not answer the user or explain your work."
-          },
-          { role: "user", content: prompt }
-        ],
-        max_tokens: 512
-      });
-      const candidate = typeof enhanced?.response === "string" ? enhanced.response.trim() : "";
-      if (candidate && candidate.length <= 2500) imagePrompt = candidate;
-    } catch {
-      // Keep the original request if the prompt-rewriter model is unavailable.
+    const endpoint = getImageEndpoint(env);
+    const headers = { "content-type": "application/json", "accept": "application/json" };
+    if (typeof env.CORE_IMAGE_TOKEN === "string" && env.CORE_IMAGE_TOKEN.trim()) headers.authorization = "Bearer " + env.CORE_IMAGE_TOKEN.trim();
+    const model = typeof env.CORE_IMAGE_MODEL === "string" && env.CORE_IMAGE_MODEL.trim() ? env.CORE_IMAGE_MODEL.trim() : "local-image-model";
+    const upstream = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ model, prompt, n: 1, response_format: "b64_json" }),
+      signal: AbortSignal.timeout(120000)
+    });
+    if (!upstream.ok) throw new Error("Self-hosted image server returned HTTP " + upstream.status + ": " + (await upstream.text().catch(() => "")).slice(0, 180));
+    const result = await upstream.json();
+    const item = result?.data?.[0] || result;
+    let image = item?.b64_json || item?.image || item?.image_base64;
+    let mimeType = item?.mime_type || "image/png";
+    if (typeof image === "string" && image.startsWith("data:image/")) {
+      const match = image.match(/^data:(image\\/[a-z0-9.+-]+);base64,([\\s\\S]+)$/i);
+      if (match) { mimeType = match[1]; image = match[2]; }
     }
-    const result = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt: imagePrompt });
-    let image = result?.image;
-    if (image instanceof ArrayBuffer) image = btoa(String.fromCharCode(...new Uint8Array(image)));
-    else if (image instanceof Uint8Array) {
+    if (typeof image !== "string" && typeof item?.url === "string") {
+      const imageResponse = await fetch(item.url, { signal: AbortSignal.timeout(30000) });
+      if (!imageResponse.ok) throw new Error("Image server returned an inaccessible image URL.");
+      const buffer = await imageResponse.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
       let binary = "";
-      for (let i = 0; i < image.length; i += 0x8000) binary += String.fromCharCode(...image.subarray(i, i + 0x8000));
+      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
       image = btoa(binary);
+      mimeType = imageResponse.headers.get("content-type") || "image/png";
     }
-    if (typeof image !== "string" || !image.length) {
-      return json({ error: "The image model returned no image. Please try a more specific prompt." }, 502);
-    }
-    // Workers AI returns the generated image as base64. Do not store it automatically;
-    // the client can explicitly save it to the user's private file area.
-    return json({ ok: true, mimeType: "image/png", image: "data:image/png;base64," + image, prompt, model: "@cf/black-forest-labs/flux-1-schnell" });
+    if (typeof image !== "string" || !image.length) throw new Error("Self-hosted image server returned no base64 image or image URL.");
+    return json({ ok: true, mimeType, image: image.startsWith("data:") ? image : "data:" + mimeType + ";base64," + image, prompt, model });
   } catch (error) {
     return json({ error: "Image generation failed: " + String(error?.message || error).slice(0, 300) }, 502);
   }
