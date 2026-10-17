@@ -198,10 +198,11 @@ export default {
         }
       } else {
         // Admin HTML is served only after checking the authenticated account against ADMIN_EMAIL.
-        if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html") {
+        if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html" || url.pathname === "/admin/users" || url.pathname === "/admin/users/") {
           const adminUser = await getSessionUser(request, env);
           if (!isAdminUser(adminUser, env)) return new Response("Not found.", { status: 404 });
-          const adminUrl = new URL("/admin.html", url.origin);
+          const assetPath = url.pathname.startsWith("/admin/users") ? "/admin-users.html" : "/admin.html";
+          const adminUrl = new URL(assetPath, url.origin);
           return env.ASSETS.fetch(new Request(adminUrl, { method: request.method, headers: request.headers, redirect: "manual" }));
         }
         // Keep the public landing page at / while routing account/chat URLs to the preserved chat application.
