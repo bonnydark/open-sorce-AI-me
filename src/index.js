@@ -65,7 +65,7 @@ export default {
     try {
       let response;
       if (url.pathname === "/api/health" && request.method === "GET") {
-        response = json({ ok: true, service: "gortgpt", ai: Boolean(env.CORE_AI_URL), database: Boolean(env.DB) });
+        response = json({ ok: true, service: "gortgpt", ai: Boolean(env.CORE_AI_URL || env.AI), database: Boolean(env.DB) });
       }
       else if (url.pathname === "/api/local-ai/manifest" && request.method === "GET") {
         response = json({ ok: true, service: "gortgpt-browser-local-ai", manifestVersion: 1, modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", modelVersion: "qwen25-05b-q4f16-r1", enginePackage: "@mlc-ai/web-llm", engineVersion: "0.2.84", cacheBackend: "cache", updatedAt: "2026-10-17" });
