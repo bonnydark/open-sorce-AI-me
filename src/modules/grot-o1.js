@@ -17,7 +17,8 @@ function shouldAutoResearch(conversation, settings) {
   const lastUser = [...(Array.isArray(conversation) ? conversation : [])].reverse().find(item => item?.role === "user" && typeof item.content === "string");
   const text = String(lastUser?.content || "").toLowerCase();
   const asksForResearch = /\b(research|sources?|citations?|references?|compare (?:the )?sources|fact.?check|verify (?:this|these)|look up|search (?:the )?web|latest|current|today|recent|news|202[0-9])\b|tìm nguồn|tìm thông tin|tìm hiểu|trích dẫn|dẫn nguồn|đối chiếu|kiểm chứng|tra cứu|tìm trên mạng|tìm trên web|mới nhất|hôm nay|hiện tại|tin mới|thông tin mới|nguồn uy tín|nghiên cứu|so sánh|đánh giá|bài báo|tài liệu chính thức/i.test(text);
-  return asksForResearch && settings.researchMode !== "off";
+  const factualQuestion = text.includes("?") && /\b(what|who|when|where|which|why|how many|how much|how does|how do|what is|who is|what are|when did|where can|compare|versus|\bvs\b|price|cost|best|top|review|company|law|policy|version|product|service|release|study|paper|report|event|model|api|framework|technology|website|official|support|tại sao|là gì|ai là|khi nào|ở đâu|bao nhiêu|như thế nào|so sánh|công nghệ|sản phẩm|dịch vụ|luật|chính sách|phiên bản|giá|đánh giá|mô hình|website|tài liệu)\b/i.test(text);
+  return (asksForResearch || factualQuestion) && settings.researchMode !== "off";
 }
 
 export async function generateGrotO1Reply(env, conversation, settings = {}, images = []) {
